@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reelize — Turn any YouTube video into a pack of ready-to-post shorts</title>
+<meta name="description" content="Paste a YouTube link. Reelize transcribes it, finds the moments that actually hit, and cuts them into vertical clips for Reels, TikTok and Shorts.">
+<meta property="og:title" content="Reelize — one link in, a week of shorts out">
+<meta property="og:description" content="AI transcription with timecodes, highlight detection, and automatic vertical cuts. From podcast to posted in minutes.">
+<meta property="og:type" content="website">
+<style>
+/* ============ tokens ============ */
+:root{
+  --ink:#08080C;
+  --ink-2:#101018;
+  --ink-3:#17171F;
+  --paper:#F6F5EF;
+  --muted:#9A99AD;
+  --lime:#D8FF3E;
+  --pink:#FF2E74;
+  --violet:#7A5BFF;
+  --cyan:#3EE8FF;
+  --line:rgba(246,245,239,.12);
+  --r-s:10px; --r-m:18px; --r-l:28px; --r-xl:40px;
+  --maxw:1180px;
+  --shadow:0 30px 80px -20px rgba(0,0,0,.75);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--ink);
+  color:var(--paper);
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-size:17px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+button{font:inherit;cursor:pointer;border:0}
+h1,h2,h3{margin:0;font-weight:900;letter-spacing:-.045em;line-height:.92}
+p{margin:0}
+::selection{background:var(--lime);color:var(--ink)}
+
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);
+}
+.eyebrow::before{content:"";width:22px;height:2px;background:var(--lime);border-radius:2px}
+
+/* ============ background glow ============ */
+.glow{position:fixed;inset:0;pointer-events:none;z-index:0}
+.glow i{position:absolute;border-radius:50%;filter:blur(110px);opacity:.30}
+.glow i:nth-child(1){width:620px;height:620px;background:var(--violet);top:-220px;left:-160px}
+.glow i:nth-child(2){width:520px;height:520px;background:var(--pink);top:180px;right:-200px;opacity:.22}
+.glow i:nth-child(3){width:460px;height:460px;background:var(--lime);top:1250px;left:35%;opacity:.10}
+main,header,footer{position:relative;z-index:1}
+
+/* ============ nav ============ */
+header{position:sticky;top:0;z-index:60;backdrop-filter:blur(14px);background:rgba(8,8,12,.72);border-bottom:1px solid transparent;transition:border-color .25s}
+header.stuck{border-bottom-color:var(--line)}
+.nav{display:flex;align-items:center;gap:28px;height:72px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:900;font-size:21px;letter-spacing:-.05em}
+.logo .mark{
+  width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+  background:var(--lime);color:var(--ink);font-size:15px;
+  box-shadow:0 0 0 3px rgba(216,255,62,.18);
+  transform:rotate(-6deg);
+}
+.nav nav{display:flex;gap:26px;margin-left:auto;font-size:14.5px;font-weight:600;color:var(--muted)}
+.nav nav a:hover{color:var(--paper)}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  padding:13px 22px;border-radius:999px;font-weight:800;font-size:15px;letter-spacing:-.01em;
+  background:var(--lime);color:var(--ink);
+  transition:transform .16s cubic-bezier(.34,1.56,.64,1),box-shadow .2s,background .2s;
+  box-shadow:0 0 0 0 rgba(216,255,62,.5);
+}
+.btn:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 12px 30px -8px rgba(216,255,62,.55)}
+.btn:active{transform:translateY(0) scale(.99)}
+.btn.ghost{background:transparent;color:var(--paper);border:1.5px solid var(--line)}
+.btn.ghost:hover{border-color:var(--paper);box-shadow:none}
+.btn.pink{background:var(--pink);color:#fff}
+.btn.pink:hover{box-shadow:0 12px 30px -8px rgba(255,46,116,.6)}
+.btn.big{padding:18px 34px;font-size:17px}
+.nav .btn{margin-left:4px}
+
+/* ============ hero ============ */
+.hero{padding:74px 0 40px;position:relative}
+.hero-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:56px;align-items:center}
+.badge-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:26px}
+.badge{
+  font-size:12.5px;font-weight:800;letter-spacing:-.01em;
+  padding:7px 14px;border-radius:999px;border:1px solid var(--line);color:var(--muted);
+  background:rgba(246,245,239,.03);
+}
+.badge.hot{border-color:rgba(255,46,116,.45);color:#FF7FA8;background:rgba(255,46,116,.10)}
+h1{font-size:clamp(44px,6.6vw,88px)}
+h1 .hl{position:relative;white-space:nowrap;color:var(--ink);padding:0 .12em}
+h1 .hl::before{
+  content:"";position:absolute;inset:-.04em -.02em;background:var(--lime);
+  border-radius:12px;transform:rotate(-1.6deg);z-index:-1;
+}
+h1 .out{
+  -webkit-text-stroke:2px var(--paper);color:transparent;
+}
+.sub{margin-top:26px;font-size:19.5px;color:#C9C8D6;max-width:520px;line-height:1.5}
+.sub b{color:var(--paper);font-weight:700}
+
+/* waitlist form */
+.wl{margin-top:34px;max-width:520px}
+.wl-form{display:flex;gap:10px;background:var(--ink-2);border:1px solid var(--line);padding:8px;border-radius:999px;transition:border-color .2s,box-shadow .2s}
+.wl-form:focus-within{border-color:var(--lime);box-shadow:0 0 0 4px rgba(216,255,62,.12)}
+.wl-form input{
+  flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--paper);
+  font-size:16px;padding:0 18px;font-weight:500;
+}
+.wl-form input::placeholder{color:#6C6B7E}
+.wl-meta{display:flex;align-items:center;gap:12px;margin-top:16px;font-size:13.5px;color:var(--muted)}
+.avatars{display:flex}
+.avatars span{
+  width:26px;height:26px;border-radius:50%;border:2px solid var(--ink);margin-left:-9px;
+  font-size:11px;font-weight:800;display:grid;place-items:center;color:var(--ink);
+}
+.avatars span:first-child{margin-left:0}
+.wl-ok{
+  display:none;align-items:center;gap:12px;padding:18px 22px;border-radius:var(--r-m);
+  background:rgba(216,255,62,.10);border:1px solid rgba(216,255,62,.35);font-weight:600;
+}
+.wl-ok .tick{width:26px;height:26px;border-radius:50%;background:var(--lime);color:var(--ink);display:grid;place-items:center;font-weight:900;flex:none}
+.wl.done .wl-form,.wl.done .wl-meta{display:none}
+.wl.done .wl-ok{display:flex}
+.err{color:#FF7FA8;font-size:13.5px;margin-top:10px;display:none}
+.err.on{display:block}
+
+/* phone mockup */
+.stage{position:relative;display:flex;justify-content:center;perspective:1400px}
+.phone{
+  width:290px;aspect-ratio:9/19.5;border-radius:42px;background:#000;
+  border:8px solid #1B1B24;box-shadow:var(--shadow),0 0 0 1px rgba(246,245,239,.08);
+  position:relative;overflow:hidden;transform:rotateY(-13deg) rotateX(4deg) rotateZ(1.5deg);
+}
+.phone::after{content:"";position:absolute;top:12px;left:50%;transform:translateX(-50%);width:86px;height:22px;background:#000;border-radius:999px;z-index:6}
+.reel{position:absolute;inset:0}
+.reel .scene{position:absolute;inset:0;opacity:0;transition:opacity .5s}
+.reel .scene.on{opacity:1}
+.scene-1{background:linear-gradient(155deg,#2B1B5E,#6B2AA8 45%,#FF2E74)}
+.scene-2{background:linear-gradient(155deg,#062B3A,#0E7490 50%,#3EE8FF)}
+.scene-3{background:linear-gradient(155deg,#3A2A05,#8A6D0B 45%,#D8FF3E)}
+.scene .head{
+  position:absolute;left:50%;top:34%;transform:translate(-50%,-50%);
+  width:130px;height:130px;border-radius:50%;background:rgba(0,0,0,.28);
+  border:3px solid rgba(255,255,255,.35);backdrop-filter:blur(2px);
+}
+.scene .head::before{content:"";position:absolute;left:50%;top:26%;transform:translateX(-50%);width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.55)}
+.scene .head::after{content:"";position:absolute;left:50%;bottom:-2px;transform:translateX(-50%);width:96px;height:52px;border-radius:60px 60px 0 0;background:rgba(255,255,255,.5)}
+.cap{
+  position:absolute;left:16px;right:16px;bottom:96px;text-align:center;
+  font-size:26px;font-weight:900;letter-spacing:-.03em;line-height:1.12;text-transform:uppercase;
+  text-shadow:0 4px 18px rgba(0,0,0,.6);
+}
+.cap em{font-style:normal;background:var(--lime);color:#000;padding:0 6px;border-radius:6px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.scene-2 .cap em{background:var(--cyan)}
+.scene-3 .cap em{background:var(--pink);color:#fff}
+.phone .ui-top{position:absolute;top:44px;left:16px;right:16px;display:flex;justify-content:space-between;font-size:11px;font-weight:800;letter-spacing:.1em;opacity:.85;z-index:5}
+.phone .bar{position:absolute;left:16px;right:16px;bottom:66px;height:3px;background:rgba(255,255,255,.28);border-radius:3px;overflow:hidden;z-index:5}
+.phone .bar i{display:block;height:100%;background:#fff;width:0%;animation:fill 4s linear infinite}
+@keyframes fill{from{width:0}to{width:100%}}
+.phone .rail{position:absolute;right:14px;bottom:110px;display:grid;gap:18px;z-index:5;text-align:center;font-size:10px;font-weight:800}
+.phone .rail div span{display:block;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.35);display:grid;place-items:center;font-size:16px;margin-bottom:3px}
+
+/* floating chips around phone */
+.chip{
+  position:absolute;z-index:20;background:var(--ink-2);border:1px solid var(--line);
+  border-radius:14px;padding:11px 14px;font-size:13px;font-weight:700;
+  box-shadow:0 20px 40px -18px rgba(0,0,0,.9);white-space:nowrap;
+  animation:float 6s ease-in-out infinite;
+}
+.chip small{display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.02em}
+.chip.c1{top:12%;left:-6%;border-color:rgba(216,255,62,.4)}
+.chip.c2{top:47%;right:-8%;animation-delay:-2s;border-color:rgba(255,46,116,.4)}
+.chip.c3{bottom:9%;left:-2%;animation-delay:-4s;border-color:rgba(62,232,255,.4)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px;vertical-align:1px}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+
+/* ============ marquee ============ */
+.marquee{
+  margin-top:64px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  background:rgba(216,255,62,.04);overflow:hidden;padding:16px 0;
+  --dur:34s;
+}
+.marquee .track{display:flex;gap:38px;width:max-content;animation:scroll var(--dur) linear infinite}
+.marquee span{font-size:15px;font-weight:800;letter-spacing:-.01em;color:#B8B7C8;display:flex;align-items:center;gap:38px}
+.marquee span::after{content:"✦";color:var(--lime)}
+@keyframes scroll{to{transform:translateX(-50%)}}
+
+/* ============ sections ============ */
+section{padding:110px 0}
+.head-block{max-width:720px;margin-bottom:60px}
+.head-block h2{font-size:clamp(34px,4.6vw,58px);margin-top:18px}
+.head-block p{margin-top:20px;font-size:18.5px;color:#B8B7C8;max-width:600px}
+
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.step{
+  background:var(--ink-2);border:1px solid var(--line);border-radius:var(--r-l);padding:26px 24px 28px;
+  position:relative;overflow:hidden;transition:transform .3s,border-color .3s;
+}
+.step:hover{transform:translateY(-6px);border-color:rgba(246,245,239,.28)}
+.step .n{
+  font-size:13px;font-weight:900;letter-spacing:-.02em;width:34px;height:34px;border-radius:11px;
+  display:grid;place-items:center;background:var(--paper);color:var(--ink);margin-bottom:20px;
+}
+.step:nth-child(1) .n{background:var(--lime)}
+.step:nth-child(2) .n{background:var(--cyan)}
+.step:nth-child(3) .n{background:var(--violet);color:#fff}
+.step:nth-child(4) .n{background:var(--pink);color:#fff}
+.step h3{font-size:21px;letter-spacing:-.03em;line-height:1.15}
+.step p{margin-top:11px;font-size:14.8px;color:var(--muted);line-height:1.5}
+.step .art{margin-top:22px;height:74px;border-radius:14px;background:var(--ink-3);border:1px solid var(--line);overflow:hidden;position:relative}
+
+/* art: link */
+.art-link{display:flex;align-items:center;gap:8px;padding:0 12px;height:100%;font-size:11.5px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.art-link .caret{width:1.5px;height:14px;background:var(--lime);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+/* art: transcript lines */
+.art-lines{padding:12px;display:grid;gap:7px}
+.art-lines i{display:block;height:6px;border-radius:3px;background:rgba(246,245,239,.16)}
+.art-lines i:nth-child(1){width:88%}.art-lines i:nth-child(2){width:64%}
+.art-lines i:nth-child(3){width:78%;background:var(--cyan);opacity:.8}
+.art-lines i:nth-child(4){width:50%}
+/* art: wave */
+.art-wave{display:flex;align-items:center;gap:2.5px;height:100%;padding:0 12px}
+.art-wave i{flex:1;background:rgba(246,245,239,.22);border-radius:2px;animation:pulse 1.6s ease-in-out infinite}
+.art-wave i.hot{background:var(--violet);box-shadow:0 0 12px var(--violet)}
+@keyframes pulse{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1)}}
+/* art: clips */
+.art-clips{display:flex;gap:7px;padding:10px 12px;height:100%}
+.art-clips i{flex:1;border-radius:7px;background:linear-gradient(160deg,#FF2E74,#7A5BFF)}
+.art-clips i:nth-child(2){background:linear-gradient(160deg,#3EE8FF,#7A5BFF)}
+.art-clips i:nth-child(3){background:linear-gradient(160deg,#D8FF3E,#3EE8FF)}
+.art-clips i:nth-child(4){background:linear-gradient(160deg,#FF2E74,#D8FF3E);opacity:.45}
+
+/* ============ demo panel ============ */
+.demo{display:grid;grid-template-columns:1.15fr .85fr;gap:26px;align-items:start}
+.panel{background:var(--ink-2);border:1px solid var(--line);border-radius:var(--r-l);overflow:hidden}
+.panel-top{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line);font-size:13.5px;font-weight:700;color:var(--muted)}
+.panel-top .lights{display:flex;gap:6px;margin-right:6px}
+.panel-top .lights i{width:9px;height:9px;border-radius:50%;background:#2E2E3C}
+.panel-top .lights i:first-child{background:#FF5F57}.panel-top .lights i:nth-child(2){background:#FEBC2E}.panel-top .lights i:nth-child(3){background:#28C840}
+.tscript{max-height:430px;overflow:auto;padding:8px}
+.tline{display:grid;grid-template-columns:60px 1fr;gap:14px;padding:11px 14px;border-radius:12px;font-size:14.5px;color:#A9A8BA;transition:background .25s,color .25s}
+.tline time{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;color:#63627A;padding-top:2px}
+.tline.hot{background:rgba(122,91,255,.13);color:var(--paper);box-shadow:inset 0 0 0 1px rgba(122,91,255,.35)}
+.tline.hot time{color:var(--violet)}
+.tline .score{
+  display:inline-block;margin-left:8px;font-size:11px;font-weight:900;letter-spacing:.02em;
+  background:var(--violet);color:#fff;padding:2px 8px;border-radius:999px;vertical-align:2px;
+}
+.tscript::-webkit-scrollbar{width:8px}
+.tscript::-webkit-scrollbar-thumb{background:#26263A;border-radius:8px}
+
+.clips{display:grid;gap:12px}
+.clip{
+  display:grid;grid-template-columns:56px 1fr auto;gap:14px;align-items:center;
+  background:var(--ink-2);border:1px solid var(--line);border-radius:var(--r-m);padding:12px;
+  transition:transform .25s,border-color .25s;
+}
+.clip:hover{transform:translateX(4px);border-color:rgba(246,245,239,.3)}
+.clip .thumb{width:56px;height:74px;border-radius:10px;position:relative;overflow:hidden;display:grid;place-items:center;font-size:18px}
+.clip:nth-child(1) .thumb{background:linear-gradient(160deg,#6B2AA8,#FF2E74)}
+.clip:nth-child(2) .thumb{background:linear-gradient(160deg,#0E7490,#3EE8FF)}
+.clip:nth-child(3) .thumb{background:linear-gradient(160deg,#8A6D0B,#D8FF3E)}
+.clip:nth-child(4) .thumb{background:linear-gradient(160deg,#2B1B5E,#7A5BFF)}
+.clip b{display:block;font-size:14.5px;letter-spacing:-.02em}
+.clip small{display:block;color:var(--muted);font-size:12.5px;margin-top:3px}
+.viral{font-size:12px;font-weight:900;padding:5px 10px;border-radius:999px;background:rgba(216,255,62,.14);color:var(--lime);border:1px solid rgba(216,255,62,.3)}
+
+/* ============ features ============ */
+.feats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.feat{background:var(--ink-2);border:1px solid var(--line);border-radius:var(--r-l);padding:28px;transition:transform .3s,border-color .3s,background .3s}
+.feat:hover{transform:translateY(-5px);border-color:rgba(246,245,239,.26);background:var(--ink-3)}
+.feat .ic{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;font-size:21px;background:rgba(246,245,239,.06);border:1px solid var(--line);margin-bottom:18px}
+.feat h3{font-size:19px;letter-spacing:-.03em}
+.feat p{margin-top:10px;font-size:15px;color:var(--muted);line-height:1.55}
+
+/* ============ stats ============ */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;text-align:center}
+.stat{padding:34px 18px;border-radius:var(--r-l);border:1px solid var(--line);background:var(--ink-2)}
+.stat b{display:block;font-size:clamp(34px,4.4vw,50px);font-weight:900;letter-spacing:-.05em;line-height:1}
+.stat:nth-child(1) b{color:var(--lime)}.stat:nth-child(2) b{color:var(--cyan)}
+.stat:nth-child(3) b{color:var(--pink)}.stat:nth-child(4) b{color:var(--violet)}
+.stat span{display:block;margin-top:10px;font-size:14px;color:var(--muted);font-weight:600}
+
+/* ============ quotes ============ */
+.quotes{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.quote{background:var(--ink-2);border:1px solid var(--line);border-radius:var(--r-l);padding:28px;display:flex;flex-direction:column;gap:20px}
+.quote p{font-size:16px;line-height:1.55;color:#D7D6E2}
+.quote .who{display:flex;align-items:center;gap:12px;margin-top:auto}
+.quote .who i{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:900;color:var(--ink);font-size:14px;flex:none}
+.quote .who b{display:block;font-size:14px}
+.quote .who small{color:var(--muted);font-size:12.5px}
+
+/* ============ faq ============ */
+.faq{max-width:820px;margin:0 auto}
+details{border-bottom:1px solid var(--line);padding:22px 4px}
+details summary{
+  list-style:none;cursor:pointer;font-size:19px;font-weight:800;letter-spacing:-.03em;
+  display:flex;justify-content:space-between;align-items:center;gap:20px;
+}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:"+";font-size:26px;font-weight:400;color:var(--lime);transition:transform .25s;flex:none}
+details[open] summary::after{transform:rotate(45deg)}
+details p{margin-top:14px;color:var(--muted);font-size:16px;line-height:1.6;max-width:680px}
+
+/* ============ final cta ============ */
+.cta{
+  border-radius:var(--r-xl);padding:clamp(44px,6vw,80px);text-align:center;position:relative;overflow:hidden;
+  background:linear-gradient(140deg,#7A5BFF 0%,#FF2E74 55%,#D8FF3E 130%);color:var(--ink);
+}
+.cta h2{font-size:clamp(36px,5.4vw,68px);max-width:14ch;margin:0 auto}
+.cta p{margin-top:22px;font-size:19px;font-weight:600;opacity:.82;max-width:44ch;margin-left:auto;margin-right:auto}
+.cta .wl{margin:34px auto 0}
+.cta .wl-form{background:rgba(8,8,12,.9);border-color:rgba(8,8,12,.2)}
+.cta .wl-meta{color:rgba(8,8,12,.7);font-weight:600;justify-content:center}
+.cta .wl-ok{background:rgba(8,8,12,.9);border-color:rgba(8,8,12,.2);color:var(--paper);justify-content:center}
+.cta .avatars span{border-color:transparent}
+
+/* ============ footer ============ */
+footer{border-top:1px solid var(--line);padding:56px 0 40px;margin-top:110px}
+.foot{display:flex;justify-content:space-between;gap:30px;flex-wrap:wrap;align-items:flex-start}
+.foot-links{display:flex;gap:52px;flex-wrap:wrap}
+.foot-links div b{display:block;font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:14px}
+.foot-links div a{display:block;font-size:14.5px;color:#C9C8D6;margin-bottom:9px}
+.foot-links div a:hover{color:var(--lime)}
+.foot-bottom{margin-top:44px;padding-top:24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:13.5px;color:#63627A}
+
+/* ============ reveal ============ */
+.rv{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1)}
+.rv.in{opacity:1;transform:none}
+
+/* ============ responsive ============ */
+@media (max-width:1000px){
+  .hero-grid{grid-template-columns:1fr;gap:56px}
+  .sub,.wl{max-width:100%}
+  .stage{margin-top:10px}
+  .demo{grid-template-columns:1fr}
+  .steps{grid-template-columns:repeat(2,1fr)}
+  .feats,.quotes{grid-template-columns:repeat(2,1fr)}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .nav nav{display:none}
+}
+@media (max-width:640px){
+  body{font-size:16px}
+  section{padding:76px 0}
+  .steps,.feats,.quotes{grid-template-columns:1fr}
+  .wl-form{flex-direction:column;border-radius:22px;padding:10px}
+  .wl-form input{padding:12px 12px}
+  .wl-form .btn{width:100%}
+  .chip.c1{left:-2%}.chip.c2{right:-2%}.chip.c3{left:0}
+  .phone{width:250px;transform:none}
+  footer{margin-top:76px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  html{scroll-behavior:auto}
+  .rv{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+
+<div class="glow" aria-hidden="true"><i></i><i></i><i></i></div>
+
+<header id="hdr">
+  <div class="wrap nav">
+    <a class="logo" href="#top"><span class="mark">▶</span>Reelize</a>
+    <nav>
+      <a href="#how">How it works</a>
+      <a href="#demo">Demo</a>
+      <a href="#features">Features</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a class="btn" href="#waitlist">Join the waitlist</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ================= HERO ================= -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <div class="badge-row">
+          <span class="badge hot">● Early access — Q3 2026</span>
+          <span class="badge">No editor needed</span>
+          <span class="badge">40+ languages</span>
+        </div>
+
+        <h1>
+          One link in.<br>
+          A month of <span class="hl">shorts</span><br>
+          <span class="out">out.</span>
+        </h1>
+
+        <p class="sub">
+          Paste a YouTube link — a podcast, an interview, a 3-hour ramble.
+          Reelize transcribes it with timecodes, finds the moments that actually
+          <b>hit</b>, and hands you a pack of vertical clips ready for Reels, TikTok and Shorts.
+        </p>
+
+        <div class="wl" id="waitlist">
+          <form class="wl-form" novalidate>
+            <input type="email" placeholder="you@studio.com" aria-label="Your email" autocomplete="email">
+            <button class="btn pink" type="submit">Get early access →</button>
+          </form>
+          <p class="err">Enter a valid email — we only need one.</p>
+          <div class="wl-meta">
+            <span class="avatars" aria-hidden="true">
+              <span style="background:#D8FF3E">A</span>
+              <span style="background:#3EE8FF">M</span>
+              <span style="background:#FF2E74;color:#fff">K</span>
+              <span style="background:#7A5BFF;color:#fff">R</span>
+            </span>
+            <span><b id="count">2,847</b> creators already in line · free credits at launch</span>
+          </div>
+          <div class="wl-ok"><span class="tick">✓</span><span>You're in. We'll email your invite before public launch.</span></div>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="chip c1"><span class="dot" style="background:#D8FF3E"></span>Transcribed<small>2:14:08 → 4.2s</small></div>
+        <div class="chip c2"><span class="dot" style="background:#FF2E74"></span>Viral score 94<small>“the part nobody expects”</small></div>
+        <div class="chip c3"><span class="dot" style="background:#3EE8FF"></span>12 clips ready<small>9:16 · captions burned in</small></div>
+
+        <div class="phone" aria-hidden="true">
+          <div class="reel" id="reel">
+            <div class="scene scene-1 on">
+              <div class="head"></div>
+              <div class="cap">and that's when <em>everything</em> changed</div>
+            </div>
+            <div class="scene scene-2">
+              <div class="head"></div>
+              <div class="cap">nobody tells you <em>this part</em></div>
+            </div>
+            <div class="scene scene-3">
+              <div class="head"></div>
+              <div class="cap">i lost <em>$40,000</em> in one week</div>
+            </div>
+          </div>
+          <div class="ui-top"><span>REELIZE</span><span>CLIP 03 / 12</span></div>
+          <div class="rail">
+            <div><span>♥</span>12.4K</div>
+            <div><span>💬</span>842</div>
+            <div><span>↗</span>3.1K</div>
+          </div>
+          <div class="bar"><i></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="marquee" aria-hidden="true">
+      <div class="track">
+        <span>Podcasts</span><span>Interviews</span><span>Webinars</span><span>Sermons</span><span>Twitch VODs</span><span>Panel talks</span><span>Course lessons</span><span>Zoom calls</span>
+        <span>Podcasts</span><span>Interviews</span><span>Webinars</span><span>Sermons</span><span>Twitch VODs</span><span>Panel talks</span><span>Course lessons</span><span>Zoom calls</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= HOW ================= -->
+  <section id="how">
+    <div class="wrap">
+      <div class="head-block rv">
+        <span class="eyebrow">How it works</span>
+        <h2>Four steps.<br>You only do the first one.</h2>
+        <p>No timeline, no keyframes, no exporting at 2am. Drop the URL and go make coffee — the pack lands in your library.</p>
+      </div>
+
+      <div class="steps">
+        <article class="step rv">
+          <div class="n">01</div>
+          <h3>Paste the link</h3>
+          <p>Any public YouTube video. 10 minutes or 4 hours — same flow.</p>
+          <div class="art"><div class="art-link">youtube.com/watch?v=<span class="caret"></span></div></div>
+        </article>
+
+        <article class="step rv">
+          <div class="n">02</div>
+          <h3>AI transcribes it</h3>
+          <p>Word-level timecodes and speaker labels, so every cut lands on the beat — not mid-sentence.</p>
+          <div class="art"><div class="art-lines"><i></i><i></i><i></i><i></i></div></div>
+        </article>
+
+        <article class="step rv">
+          <div class="n">03</div>
+          <h3>AI finds the gold</h3>
+          <p>It reads the whole transcript looking for hooks, punchlines, hot takes and stories that stand alone.</p>
+          <div class="art"><div class="art-wave" id="wave"></div></div>
+        </article>
+
+        <article class="step rv">
+          <div class="n">04</div>
+          <h3>You get the pack</h3>
+          <p>Vertical 9:16 clips, reframed on the speaker, captions burned in, titled and ready to upload.</p>
+          <div class="art"><div class="art-clips"><i></i><i></i><i></i><i></i></div></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DEMO ================= -->
+  <section id="demo">
+    <div class="wrap">
+      <div class="head-block rv">
+        <span class="eyebrow">Inside the machine</span>
+        <h2>Watch it read a 2-hour podcast.</h2>
+        <p>Every line gets a timecode. Every candidate moment gets a score. You keep what you like, trash the rest.</p>
+      </div>
+
+      <div class="demo">
+        <div class="panel rv">
+          <div class="panel-top">
+            <span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>
+            transcript.json — “Building in public, 3 years in” · 2:14:08
+          </div>
+          <div class="tscript" id="tscript"></div>
+        </div>
+
+        <div class="rv">
+          <div class="clips">
+            <article class="clip">
+              <div class="thumb">🔥</div>
+              <div><b>“I lost $40,000 in one week”</b><small>00:23:41 → 00:24:29 · 48s</small></div>
+              <span class="viral">94</span>
+            </article>
+            <article class="clip">
+              <div class="thumb">💡</div>
+              <div><b>“Nobody tells you this part”</b><small>00:51:02 → 00:51:38 · 36s</small></div>
+              <span class="viral">89</span>
+            </article>
+            <article class="clip">
+              <div class="thumb">⚡</div>
+              <div><b>“The hire that saved the company”</b><small>01:12:55 → 01:13:47 · 52s</small></div>
+              <span class="viral">86</span>
+            </article>
+            <article class="clip">
+              <div class="thumb">🎯</div>
+              <div><b>“Stop building for the wrong people”</b><small>01:44:10 → 01:44:51 · 41s</small></div>
+              <span class="viral">81</span>
+            </article>
+          </div>
+
+          <div class="panel" style="margin-top:18px;padding:22px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
+              <div>
+                <b style="font-size:15px;letter-spacing:-.02em">Export pack</b>
+                <div style="color:var(--muted);font-size:13px;margin-top:4px">12 clips · MP4 1080×1920 · SRT included</div>
+              </div>
+              <a class="btn" href="#waitlist">Download</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FEATURES ================= -->
+  <section id="features">
+    <div class="wrap">
+      <div class="head-block rv">
+        <span class="eyebrow">What's in the box</span>
+        <h2>Everything you'd have done manually.</h2>
+      </div>
+
+      <div class="feats">
+        <article class="feat rv"><div class="ic">🎯</div><h3>Highlight detection</h3><p>Scored on hook strength, emotion, standalone clarity and payoff — not just loudness or keyword hits.</p></article>
+        <article class="feat rv"><div class="ic">🗣️</div><h3>Speaker-aware cuts</h3><p>Diarization keeps a two-person exchange intact instead of chopping the guest's answer in half.</p></article>
+        <article class="feat rv"><div class="ic">📱</div><h3>Auto reframe to 9:16</h3><p>The active speaker stays centred, even when the camera cuts back and forth.</p></article>
+        <article class="feat rv"><div class="ic">💬</div><h3>Burned-in captions</h3><p>Word-by-word karaoke styling, four presets, your font and brand colour.</p></article>
+        <article class="feat rv"><div class="ic">✍️</div><h3>Titles &amp; hashtags</h3><p>Each clip ships with a hook title, description and platform-specific tags you can edit inline.</p></article>
+        <article class="feat rv"><div class="ic">🌍</div><h3>40+ languages</h3><p>Transcribe in the original, translate captions for a second audience, export both.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= STATS ================= -->
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="stats rv">
+        <div class="stat"><b>4 min</b><span>Average time from link to pack</span></div>
+        <div class="stat"><b>12×</b><span>Clips from one long video</span></div>
+        <div class="stat"><b>0</b><span>Timelines you have to touch</span></div>
+        <div class="stat"><b>6 hrs</b><span>Editing saved per episode</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= QUOTES ================= -->
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="head-block rv">
+        <span class="eyebrow">Early testers</span>
+        <h2>From the private beta.</h2>
+      </div>
+      <div class="quotes">
+        <article class="quote rv">
+          <p>“I used to pay an editor $600 a month to find clips. Reelize found three he'd missed in the first episode I ran.”</p>
+          <div class="who"><i style="background:#D8FF3E">AM</i><div><b>Andrii M.</b><small>Podcast host, 92K subs</small></div></div>
+        </article>
+        <article class="quote rv">
+          <p>“Our agency runs 14 client shows. This turned Monday from a full editing day into a 40-minute review call.”</p>
+          <div class="who"><i style="background:#3EE8FF">SK</i><div><b>Sofia K.</b><small>Founder, content agency</small></div></div>
+        </article>
+        <article class="quote rv">
+          <p>“The scoring is the real product. It's not cutting randomly — it picks the bit I would have picked, faster.”</p>
+          <div class="who"><i style="background:#FF2E74;color:#fff">DR</i><div><b>Dmytro R.</b><small>Interview channel, 310K subs</small></div></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FAQ ================= -->
+  <section id="faq">
+    <div class="wrap faq">
+      <div class="head-block rv" style="margin-bottom:34px">
+        <span class="eyebrow">FAQ</span>
+        <h2>Short answers.</h2>
+      </div>
+      <div class="rv">
+        <details open><summary>How long does one video take?</summary><p>Roughly 3–5 minutes for a 2-hour podcast, end to end. Longer videos queue in the background and you get an email when the pack is ready.</p></details>
+        <details><summary>Do I have to own the video?</summary><p>You need the rights to the content you upload or link. Reelize is built for creators cutting their own long-form — we're not a rip tool for someone else's channel.</p></details>
+        <details><summary>Can I edit the clips afterwards?</summary><p>Yes. Trim the in/out points, swap caption styles, re-crop, and re-export — or download the SRT and finish in Premiere or CapCut.</p></details>
+        <details><summary>What languages work?</summary><p>40+ for transcription, including Ukrainian, Polish, German, Spanish and Portuguese. Highlight detection is strongest in English and Ukrainian today; the rest catch up each month.</p></details>
+        <details><summary>What does early access get me?</summary><p>Free credits at launch, founder pricing locked for 12 months, and a direct line to us while we tune the scoring model.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FINAL CTA ================= -->
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="cta rv">
+        <h2>Your back catalogue is a content library.</h2>
+        <p>You've already recorded the good stuff. Reelize just goes and finds it.</p>
+        <div class="wl">
+          <form class="wl-form" novalidate>
+            <input type="email" placeholder="you@studio.com" aria-label="Your email" autocomplete="email">
+            <button class="btn pink big" type="submit">Join the waitlist</button>
+          </form>
+          <p class="err">Enter a valid email — we only need one.</p>
+          <div class="wl-meta"><span>No card. No spam. One email when your invite is live.</span></div>
+          <div class="wl-ok"><span class="tick">✓</span><span>You're in. Watch your inbox.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div style="max-width:280px">
+        <a class="logo" href="#top"><span class="mark">▶</span>Reelize</a>
+        <p style="margin-top:14px;color:var(--muted);font-size:14.5px">One link in, a month of shorts out. Built for people who talk for a living.</p>
+      </div>
+      <div class="foot-links">
+        <div><b>Product</b><a href="#how">How it works</a><a href="#demo">Demo</a><a href="#features">Features</a><a href="#waitlist">Early access</a></div>
+        <div><b>Company</b><a href="#">About</a><a href="#">Blog</a><a href="mailto:hey@reelize.app">Contact</a></div>
+        <div><b>Legal</b><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Content policy</a></div>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Reelize. All rights reserved.</span>
+      <span>Made for creators who hate timelines.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  /* sticky header border */
+  var hdr = document.getElementById('hdr');
+  var onScroll = function(){ hdr.classList.toggle('stuck', window.scrollY > 8); };
+  onScroll();
+  window.addEventListener('scroll', onScroll, {passive:true});
+
+  /* scroll reveal */
+  var items = document.querySelectorAll('.rv');
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e, i){
+        if (!e.isIntersecting) return;
+        var el = e.target;
+        setTimeout(function(){ el.classList.add('in'); }, Math.min(i,5) * 70);
+        io.unobserve(el);
+      });
+    }, {threshold:.12, rootMargin:'0px 0px -60px'});
+    items.forEach(function(el){ io.observe(el); });
+  } else {
+    items.forEach(function(el){ el.classList.add('in'); });
+  }
+
+  /* phone reel rotation */
+  var scenes = document.querySelectorAll('#reel .scene'), s = 0;
+  setInterval(function(){
+    scenes[s].classList.remove('on');
+    s = (s + 1) % scenes.length;
+    scenes[s].classList.add('on');
+  }, 4000);
+
+  /* waveform bars in step 03 */
+  var wave = document.getElementById('wave');
+  if (wave) {
+    var hot = [7,8,9,10,17,18,19,26,27,28,29];
+    for (var b = 0; b < 34; b++) {
+      var bar = document.createElement('i');
+      bar.style.height = (28 + Math.round(Math.abs(Math.sin(b * 1.7)) * 62)) + '%';
+      bar.style.animationDelay = (b * 0.05) + 's';
+      if (hot.indexOf(b) > -1) bar.className = 'hot';
+      wave.appendChild(bar);
+    }
+  }
+
+  /* transcript demo */
+  var LINES = [
+    ['00:23:12','So we raised the seed and I genuinely thought the hard part was behind us.'],
+    ['00:23:29','It was not. It was maybe ten percent of the hard part.'],
+    ['00:23:41','I lost forty thousand dollars in one week. On ads. On a product nobody had asked for.', 94],
+    ['00:24:29','And the worst bit is I knew by day two. I just did not want to be the guy who was wrong.'],
+    ['00:25:03','My co-founder pulled the plug for me. Best thing anyone has ever done for this company.'],
+    ['00:26:18','After that we built one rule: no spend until five people ask for the thing unprompted.'],
+    ['00:51:02','Nobody tells you this part — the first thousand users will not come from a launch.', 89],
+    ['00:51:38','They come from you sitting in someone else\'s community being useful for four months.'],
+    ['00:52:44','It is boring. That is exactly why it works, because most people quit at week three.'],
+    ['01:12:55','The hire that saved the company was a support person. Not an engineer.', 86],
+    ['01:13:47','She read every ticket out loud on Fridays. Our churn halved in a quarter.'],
+    ['01:20:31','We shipped less that year and grew faster. I still cannot fully explain it.'],
+    ['01:44:10','Stop building for the people who might pay. Build for the ones already paying you.', 81],
+    ['01:44:51','Every feature we built for a hypothetical customer is now dead code.'],
+    ['01:52:07','If I started again? Same product, half the team, ten times the conversations.']
+  ];
+  var box = document.getElementById('tscript');
+  if (box) {
+    LINES.forEach(function(l){
+      var row = document.createElement('div');
+      row.className = 'tline' + (l[2] ? ' hot' : '');
+      var t = document.createElement('time');
+      t.textContent = l[0];
+      var p = document.createElement('span');
+      p.textContent = l[1];
+      if (l[2]) {
+        var sc = document.createElement('span');
+        sc.className = 'score';
+        sc.textContent = l[2];
+        p.appendChild(sc);
+      }
+      row.appendChild(t); row.appendChild(p);
+      box.appendChild(row);
+    });
+  }
+
+  /* waitlist forms */
+  document.querySelectorAll('.wl').forEach(function(wl){
+    var form = wl.querySelector('.wl-form');
+    var input = wl.querySelector('input');
+    var err = wl.querySelector('.err');
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      var v = (input.value || '').trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) {
+        if (err) err.classList.add('on');
+        input.focus();
+        return;
+      }
+      if (err) err.classList.remove('on');
+      // TODO: POST v to your waitlist endpoint (Formspree / Resend / your API)
+      wl.classList.add('done');
+      var c = document.getElementById('count');
+      if (c) c.textContent = (2848).toLocaleString('en-US');
+    });
+    input.addEventListener('input', function(){ if (err) err.classList.remove('on'); });
+  });
+})();
+</script>
+</body>
+</html>
