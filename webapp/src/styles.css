@@ -1,43 +1,27 @@
-* { box-sizing: border-box; }
-body { margin: 0; background: #0d0d10; color: #eee; font: 15px/1.5 -apple-system, "Segoe UI", sans-serif; }
-main { max-width: 1100px; margin: 0 auto; padding: 24px; }
-h1 { font-size: 22px; margin: 12px 0; }
-a { color: #9ecbff; text-decoration: none; }
+@import "tailwindcss";
 
-.topbar { display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #22222a; }
-.brand { font-weight: 700; cursor: pointer; }
-.spacer { flex: 1; }
-.row { display: flex; align-items: center; gap: 12px; }
-.grow { flex: 1; }
-.center { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-.muted { color: #999; }
-.small { font-size: 13px; }
-.error { color: #ff7b72; }
-.link { cursor: pointer; text-decoration: underline; }
+/* shadcn/ui zinc dark tokens */
+@theme {
+  --color-background: hsl(240 10% 3.9%);
+  --color-foreground: hsl(0 0% 98%);
+  --color-card: hsl(240 10% 5.9%);
+  --color-card-foreground: hsl(0 0% 98%);
+  --color-primary: hsl(0 0% 98%);
+  --color-primary-foreground: hsl(240 5.9% 10%);
+  --color-secondary: hsl(240 3.7% 15.9%);
+  --color-secondary-foreground: hsl(0 0% 98%);
+  --color-muted: hsl(240 3.7% 15.9%);
+  --color-muted-foreground: hsl(240 5% 64.9%);
+  --color-accent: hsl(240 3.7% 15.9%);
+  --color-accent-foreground: hsl(0 0% 98%);
+  --color-destructive: hsl(0 72% 51%);
+  --color-border: hsl(240 3.7% 15.9%);
+  --color-input: hsl(240 3.7% 15.9%);
+  --color-ring: hsl(240 4.9% 83.9%);
+  --radius-lg: 0.625rem;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
 
-.card { background: #17171c; border: 1px solid #2a2a32; border-radius: 12px; }
-.card.row { padding: 12px; margin: 16px 0; }
-.pad { padding: 12px; }
-.auth { padding: 32px; width: 340px; display: flex; flex-direction: column; gap: 12px; text-align: center; }
-
-input { background: #0d0d10; color: #eee; border: 1px solid #333; border-radius: 8px; padding: 10px 12px; font: inherit; }
-button, .button { display: inline-block; background: #26262e; color: #eee; border: 1px solid #3a3a44; border-radius: 8px; padding: 9px 16px; font: inherit; cursor: pointer; }
-button.primary, .button.primary { background: #eee; color: #111; border-color: #eee; font-weight: 600; }
-button.ghost { background: none; border: none; color: #999; }
-button:disabled { opacity: 0.5; cursor: default; }
-
-.chip { background: #26262e; border-radius: 999px; padding: 6px 14px; }
-
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin-top: 16px; }
-.job { cursor: pointer; overflow: hidden; transition: border-color 0.15s; }
-.job:hover { border-color: #555; }
-.job img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
-.title { font-weight: 600; margin-bottom: 4px; }
-
-.status { text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 999px; }
-.status.done { background: #1d3a24; color: #7ee08a; }
-.status.processing { background: #3a331d; color: #e0c97e; }
-.status.error, .status.incomplete { background: #3a1d1d; color: #e08a7e; }
-
-.clip video { width: 100%; aspect-ratio: 9/16; background: #000; display: block; border-radius: 12px 12px 0 0; }
-.log { background: #0d0d10; border-radius: 8px; padding: 10px; font-size: 12px; color: #9ecbff; overflow-x: auto; white-space: pre-wrap; }
+body {
+  @apply bg-background text-foreground font-sans antialiased;
+}
