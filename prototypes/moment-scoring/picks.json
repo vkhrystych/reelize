@@ -5,109 +5,107 @@
     "duration": "2:26:00",
     "transcript_source": "YouTube auto-captions (yt-dlp json3)"
   },
-  "prompt_version": "SCORING_PROMPT.md v1",
+  "prompt_version": "SCORING_PROMPT.md v2 (15-60s, no single-phrase clips)",
   "picks": [
     {
       "rank": 1,
       "start": "01:56:13",
-      "end": "01:57:33",
+      "end": "01:57:13",
       "hook_line": "Is this 5, 10, 15, 20 years away? — I think it's now. I think we've achieved AGI.",
       "title": "Jensen: we've already achieved AGI",
       "scores": { "hook": 5, "self_contained": 4, "payoff": 4, "charge": 5 },
       "composite": 23,
-      "why": "CEO of the most valuable company says AGI is here, then backs it with the claw-runs-a-viral-app scenario — instant argument-starter."
+      "why": "CEO of the most valuable company says AGI is here, then backs it with the claw-builds-a-viral-app scenario — instant argument-starter."
     },
     {
       "rank": 2,
       "start": "01:59:14",
-      "end": "02:00:56",
+      "end": "02:00:14",
       "hook_line": "The first job AI researchers said was going to go away was radiology…",
       "title": "The AI job prediction that backfired",
       "scores": { "hook": 4, "self_contained": 5, "payoff": 5, "charge": 4 },
       "composite": 22,
-      "why": "Complete story arc with a contrarian twist — computer vision became superhuman and radiologist jobs GREW; lands right on job-loss anxiety.",
-      "note": "~102s as cut — needs a word-level trim to fit the 90s cap."
+      "why": "Complete arc: prediction → computer vision did become superhuman → and yet radiologist jobs GREW, now a shortage. Lands right on job-loss anxiety."
     },
     {
       "rank": 3,
       "start": "02:17:31",
-      "end": "02:18:33",
+      "end": "02:18:10",
       "hook_line": "Do you think about your mortality? Are you afraid of death? — I really don't want to die.",
       "title": "Jensen on death",
-      "scores": { "hook": 5, "self_contained": 5, "payoff": 3, "charge": 5 },
-      "composite": 23,
-      "why": "Rawest moment of the interview; 'this is a once-in-humanity experience' is a quotable closer.",
-      "note": "Composite recomputed: 2×5+3+5+5 = 23 — tied for top on voltage, docked on payoff (ends on a statement, not an arc)."
+      "scores": { "hook": 5, "self_contained": 5, "payoff": 4, "charge": 5 },
+      "composite": 24,
+      "why": "Rawest moment of the interview; resolves on 'this is a once-in-humanity experience' — question, confession, and a quotable closer in 40s."
     },
     {
       "rank": 4,
       "start": "00:14:09",
-      "end": "00:15:10",
+      "end": "00:15:09",
       "hook_line": "The problem was CUDA increased our cost so tremendously it completely consumed all of the company's gross profit dollars.",
       "title": "The bet that nearly killed Nvidia",
       "scores": { "hook": 4, "self_contained": 4, "payoff": 5, "charge": 4 },
       "composite": 21,
-      "why": "Market cap $8B → $1.5B, held the line anyway, 'Nvidia is the house that GeForce built' — a founding-myth story with numbers."
+      "why": "Market cap $8B → $1.5B, held the line anyway, 'Nvidia is the house that GeForce built' — a founding-myth story with numbers, exactly 60s."
     },
     {
       "rank": 5,
-      "start": "02:01:36",
-      "end": "02:02:59",
-      "hook_line": "You think the number of programmers in the world might increase, not decrease?",
+      "start": "02:02:15",
+      "end": "02:03:15",
+      "hook_line": "How many people can describe a specification? I think we just went from 30 million to probably 1 billion.",
       "title": "From 30 million to 1 billion coders",
       "scores": { "hook": 4, "self_contained": 5, "payoff": 4, "charge": 4 },
       "composite": 21,
-      "why": "'Every carpenter will be a coder… I would completely go berserk' — concrete numbers plus an image people will repeat."
+      "why": "'Every carpenter will be a coder — and a carpenter with AI is also an architect… I would completely go berserk' — numbers plus an image people repeat."
     },
     {
       "rank": 6,
-      "start": "02:07:03",
-      "end": "02:08:24",
-      "hook_line": "If we were to hire a new college graduate today and I have a choice between two…",
+      "start": "02:07:20",
+      "end": "02:08:15",
+      "hook_line": "If I have a choice between two new college graduates — one with no clue what AI is, one expert in using AI…",
       "title": "Who Jensen would hire today",
       "scores": { "hook": 4, "self_contained": 5, "payoff": 4, "charge": 4 },
       "composite": 21,
-      "why": "Direct career advice from Jensen — the 'expert in AI wins, whatever the job' repetition builds to 'every college student should graduate an expert in AI'."
+      "why": "Accountant, lawyer, salesperson — the AI expert wins every time, resolving on 'every college student should graduate an expert in AI'."
     },
     {
       "rank": 7,
       "start": "00:58:20",
-      "end": "00:59:21",
+      "end": "00:59:20",
       "hook_line": "I don't love continuous improvement — I'd rather strip it all back to zero.",
       "title": "74 days to 6 days",
       "scores": { "hook": 4, "self_contained": 5, "payoff": 4, "charge": 4 },
       "composite": 21,
-      "why": "Tight, self-contained first-principles lesson with a memorable number: reason from the speed of light and 74 days collapses to 6."
+      "why": "Full first-principles arc with a memorable number: '74 days' → 'we can do 72' → strip to zero → 'you'd be surprised, it might come to 6'."
     },
     {
       "rank": 8,
-      "start": "02:14:26",
-      "end": "02:15:29",
+      "start": "02:14:22",
+      "end": "02:15:15",
       "hook_line": "I actually think intelligence is a commodity.",
       "title": "Intelligence is a commodity",
       "scores": { "hook": 4, "self_contained": 4, "payoff": 4, "charge": 4 },
       "composite": 20,
-      "why": "'They're all superhuman to me — and somehow I'm in the middle orchestrating all 60' — humility + a provocative claim about what actually matters."
+      "why": "Setup and punch in one take: 'they're all superhuman to me — so what is it about a dishwasher that lets him sit in the middle of superhumans?'"
     },
     {
       "rank": 9,
-      "start": "01:30:49",
-      "end": "01:32:11",
+      "start": "01:30:52",
+      "end": "01:31:50",
       "hook_line": "A CEO told me: Jensen, it's theoretically impossible for a fabless semiconductor company to exceed a billion dollars.",
       "title": "Everyone who told Jensen 'impossible'",
       "scores": { "hook": 4, "self_contained": 4, "payoff": 4, "charge": 4 },
       "composite": 20,
-      "why": "Ladder of wrong predictions ($1B, $25B…) ending on 'there's nobody I could take share from' — underdog-to-untouchable arc."
+      "why": "Ladder of wrong predictions ($1B, then $25B) resolving on how to actually think: 'what do we make, and how large is the opportunity we can create'."
     },
     {
       "rank": 10,
-      "start": "00:19:36",
+      "start": "00:20:00",
       "end": "00:20:57",
-      "hook_line": "On the day I say 'let's buy Mellanox', it's completely obvious to everybody that we absolutely should.",
+      "hook_line": "I've been laying down the bricks… so on the day I announce it, employees say: Jensen, what took you so long?",
       "title": "Leading from behind",
       "scores": { "hook": 4, "self_contained": 4, "payoff": 4, "charge": 3 },
       "composite": 19,
-      "why": "Management insight with a name — shape belief systems daily so big decisions land as 'what took you so long?'. Below the ≥17 bar comfortably but lowest charge of the set.",
+      "why": "Management insight with a name — shape belief systems daily so big decisions land with 100% buy-in; 'leading from behind' is the payoff phrase.",
       "note": "Borderline pick — included to test where the driver's quality floor is."
     }
   ]

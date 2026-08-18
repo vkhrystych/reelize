@@ -1,4 +1,4 @@
-# Reelize moment-scoring prompt (v1)
+# Reelize moment-scoring prompt (v2)
 
 PROTOTYPE — wayfinder ticket 03. This is the prompt sent to Claude with a
 timecoded transcript appended. Iterate here; the pipeline will inline it.
@@ -34,7 +34,10 @@ moments with composite ≥ 17 and no axis at 1.
 
 ## Constraints
 
-- Length 20–90 s; sweet spot 30–60 s. Never exceed 90 s.
+- Length 15–60 s; sweet spot 30–45 s. Never under 15 s, never over 60 s.
+- A clip is **never a single phrase**. A killer one-liner on its own fails —
+  the clip must contain a complete thought: setup and resolution. If the
+  whole clip would work as a text post, it is not a clip.
 - Start on the hook sentence itself — cut every word of preamble.
 - End on the payoff sentence — cut trailing pleasantries and topic bridges.
 - 8–12 candidates per 1–2.5 h video, ranked by composite. Fewer is fine if the
