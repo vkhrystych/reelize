@@ -104,7 +104,7 @@ export async function plan(paths: JobPaths, opts: Options): Promise<void> {
     }
 
     const words = transcript.words.filter((w) => w.start >= startSec && w.start < endSec);
-    await writeFile(planAss, karaokeAss(words, startSec));
+    await writeFile(planAss, karaokeAss(words, startSec, pick.title));
 
     const clipPlan: ClipPlan = {
       rank: pick.rank,

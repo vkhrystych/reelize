@@ -22,6 +22,7 @@ ScaledBorderAndShadow: yes
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Default,Arial Black,80,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,1,0,1,10,4,2,70,70,470,1
+Style: Hook,Arial Black,72,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,1,0,1,12,4,8,130,130,290,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -46,12 +47,22 @@ function chunk(words: Word[], maxLen: number): Word[][] {
 }
 
 /** Emit the ASS file for one clip; word times are absolute video seconds,
- * clipStart re-bases them to the clip. */
-export function karaokeAss(words: Word[], clipStart: number): string {
+ * clipStart re-bases them to the clip. `hookTitle` renders as a 5s opening
+ * title card. TikTok safe zones: the Hook style sits top-center at ~15%
+ * height (Alignment 8, MarginV 290/1920) with 130px side margins — below the
+ * nickname/tabs strip, clear of the right icon rail and the bottom caption
+ * zone. Keep overlay text out of the top ~12%, bottom ~22%, right ~15%. */
+export function karaokeAss(words: Word[], clipStart: number, hookTitle?: string): string {
   const clean = words.filter((w) => !FILLER.test(w.text.replace(/[.,]/g, "")));
   const YEL = "{\\1c&H17D0FD&\\fscx106\\fscy106}";
   const WHITE = "{\\1c&HFFFFFF&\\fscx100\\fscy100}";
   let out = HEADER;
+  if (hookTitle) {
+    const safe = hookTitle.replace(/[{}\\]/g, "").toUpperCase();
+    // long titles wrap to 3+ lines and reach the subject's face — shrink them
+    const size = safe.length > 28 ? "{\\fs58}" : "";
+    out += `Dialogue: 1,0:00:00.00,0:00:05.00,Hook,,0,0,0,,{\\fad(200,500)}${size}${safe}\n`;
+  }
   for (const ch of chunk(clean, 4)) {
     ch.forEach((w, i) => {
       const text = ch
