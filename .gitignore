@@ -4,3 +4,4 @@ cli-py-venv/
 .env
 *.log
 .DS_Store
+.yt-cookies.txt

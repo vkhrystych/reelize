@@ -130,11 +130,20 @@ function jobSummary(id: string) {
     : clips.length > 0
       ? "done"
       : "incomplete";
+  // current pipeline stage = last stage tag seen in the log
+  let stage: string | null = null;
+  if (live) {
+    for (let i = live.log.length - 1; i >= 0 && !stage; i--) {
+      const m = live.log[i].match(/^\[(download|transcribe|score|plan|render)\]/);
+      if (m) stage = m[1];
+    }
+  }
   return {
     id,
     title: meta.title ?? id,
     thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
     status,
+    stage,
     clipCount: clips.length,
     error: live?.error ?? null,
     lastLog: live?.log.slice(-3) ?? [],

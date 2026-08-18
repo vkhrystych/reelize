@@ -1,8 +1,57 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Download } from "lucide-react";
+import { ArrowLeft, Check, Download } from "lucide-react";
 import { getJob, mediaUrl } from "../api.js";
-import { Button, Card, Spinner } from "../components/ui.jsx";
+import { Button, Card, Spinner, cn } from "../components/ui.jsx";
+
+const STEPS = [
+  { key: "download", label: "Downloading" },
+  { key: "transcribe", label: "Transcribing" },
+  { key: "score", label: "Finding the moments" },
+  { key: "plan", label: "Planning the cuts" },
+  { key: "render", label: "Rendering the reelz" },
+];
+
+function StageStepper({ stage }) {
+  const current = Math.max(0, STEPS.findIndex((s) => s.key === stage));
+  return (
+    <ol className="flex flex-wrap items-center gap-y-3">
+      {STEPS.map((step, i) => {
+        const state = i < current ? "done" : i === current ? "active" : "todo";
+        return (
+          <li key={step.key} className="flex items-center">
+            <span className="flex items-center gap-2">
+              <span
+                className={cn(
+                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs",
+                  state === "done" && "border-emerald-500/40 bg-emerald-500/15 text-emerald-400",
+                  state === "active" && "border-border bg-secondary",
+                  state === "todo" && "border-border text-muted-foreground",
+                )}
+              >
+                {state === "done" ? <Check className="h-3.5 w-3.5" /> :
+                 state === "active" ? <Spinner className="h-3.5 w-3.5" /> : i + 1}
+              </span>
+              <span
+                className={cn(
+                  "text-sm",
+                  state === "active" && "font-medium",
+                  state === "todo" && "text-muted-foreground",
+                  state === "done" && "text-emerald-400",
+                )}
+              >
+                {step.label}
+              </span>
+            </span>
+            {i < STEPS.length - 1 && (
+              <span className={cn("mx-3 h-px w-6 sm:w-10", i < current ? "bg-emerald-500/40" : "bg-border")} />
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
 
 export default function Job() {
   const { id } = useParams();
@@ -47,12 +96,10 @@ export default function Job() {
 
       {job.status === "processing" && (
         <Card className="mb-6 p-5">
-          <p className="mb-3 flex items-center gap-2 text-sm">
-            <Spinner /> Processing… this takes a few minutes for long videos.
+          <StageStepper stage={job.stage} />
+          <p className="mt-4 truncate text-xs text-muted-foreground">
+            {job.lastLog[job.lastLog.length - 1] ?? "starting…"}
           </p>
-          <pre className="overflow-x-auto rounded-lg bg-background p-3 text-xs text-muted-foreground">
-            {job.lastLog.join("\n") || "starting…"}
-          </pre>
         </Card>
       )}
       {job.status === "error" && (
