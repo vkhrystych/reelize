@@ -43,26 +43,32 @@ function StatsStrip({ job }) {
   );
 }
 
-function StageStepper({ stage }) {
+function StageStepper({ stage, lastLog }) {
   const current = Math.max(0, STEPS.findIndex((s) => s.key === stage));
   return (
-    <ol className="flex flex-wrap items-center gap-y-3">
+    <ol>
       {STEPS.map((step, i) => {
         const state = i < current ? "done" : i === current ? "active" : "todo";
+        const last = i === STEPS.length - 1;
         return (
-          <li key={step.key} className="flex items-center">
-            <span className="flex items-center gap-2">
+          <li key={step.key} className="flex gap-3">
+            <div className="flex flex-col items-center">
               <span
                 className={cn(
-                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs",
+                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs",
                   state === "done" && "border-emerald-500/40 bg-emerald-500/15 text-emerald-400",
-                  state === "active" && "border-border bg-secondary",
+                  state === "active" && "border-zinc-500 bg-secondary",
                   state === "todo" && "border-border text-muted-foreground",
                 )}
               >
                 {state === "done" ? <Check className="h-3.5 w-3.5" /> :
                  state === "active" ? <Spinner className="h-3.5 w-3.5" /> : i + 1}
               </span>
+              {!last && (
+                <span className={cn("w-px flex-1", i < current ? "bg-emerald-500/40" : "bg-border")} />
+              )}
+            </div>
+            <div className={cn("min-w-0 pt-1", !last && "pb-5")}>
               <span
                 className={cn(
                   "text-sm",
@@ -73,10 +79,10 @@ function StageStepper({ stage }) {
               >
                 {step.label}
               </span>
-            </span>
-            {i < STEPS.length - 1 && (
-              <span className={cn("mx-3 h-px w-6 sm:w-10", i < current ? "bg-emerald-500/40" : "bg-border")} />
-            )}
+              {state === "active" && lastLog && (
+                <p className="mt-1 truncate text-xs text-muted-foreground">{lastLog}</p>
+              )}
+            </div>
           </li>
         );
       })}
@@ -128,11 +134,17 @@ export default function Job() {
       {job.status === "done" && job.clips.length > 0 && <StatsStrip job={job} />}
 
       {job.status === "processing" && (
-        <Card className="mb-6 p-5">
-          <StageStepper stage={job.stage} />
-          <p className="mt-4 truncate text-xs text-muted-foreground">
-            {job.lastLog[job.lastLog.length - 1] ?? "starting…"}
-          </p>
+        <Card className="mx-auto mt-10 max-w-md overflow-hidden">
+          <img src={job.thumbnail} alt="" className="aspect-video w-full bg-secondary object-cover" />
+          <div className="p-6">
+            <p className="mb-5 text-sm text-muted-foreground">
+              Cutting your reelz — a long video takes a few minutes.
+            </p>
+            <StageStepper
+              stage={job.stage}
+              lastLog={job.lastLog[job.lastLog.length - 1] ?? "starting…"}
+            />
+          </div>
         </Card>
       )}
       {job.status === "error" && (
