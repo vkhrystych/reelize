@@ -16,7 +16,11 @@ export default function Login({ onAuth }) {
     const { error } = await fn(email, password);
     setBusy(false);
     if (error) return setError(error);
-    onAuth(await getUser());
+    const user = await getUser();
+    if (!user && mode === "signup") {
+      return setError("Almost there — confirm the link in your email, then log in.");
+    }
+    onAuth(user);
   };
 
   return (

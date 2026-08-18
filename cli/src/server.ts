@@ -14,22 +14,90 @@ const here = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(here, "../..");
 const CLI_DIR = join(REPO_ROOT, "cli");
 const JOBS_DIR = join(REPO_ROOT, "jobs");
-const ACCOUNT = join(JOBS_DIR, "account.json");
+const ACCOUNTS = join(JOBS_DIR, "accounts.json");
+const OWNERS = join(JOBS_DIR, "owners.json");
 const PORT = Number(process.env.PORT ?? 5178);
 const TOKENS_PER_VIDEO = 10;
 const TOKENS_PER_USD = 10;
 
-mkdirSync(JOBS_DIR, { recursive: true });
-
-// ---- tokens ----------------------------------------------------------------
-
-function balance(): number {
-  if (!existsSync(ACCOUNT)) return 0;
-  return JSON.parse(readFileSync(ACCOUNT, "utf8")).tokens ?? 0;
+// load repo-root .env (same convention as the CLI; never overrides real env)
+const envFile = join(REPO_ROOT, ".env");
+if (existsSync(envFile)) {
+  for (const line of readFileSync(envFile, "utf8").split("\n")) {
+    const m = line.match(/^\s*([A-Z_]+)\s*=\s*(.*?)\s*(#.*)?$/);
+    if (m && m[2] && !(m[1] in process.env)) process.env[m[1]] = m[2];
+  }
 }
 
-function setBalance(tokens: number): void {
-  writeFileSync(ACCOUNT, JSON.stringify({ tokens }, null, 2));
+mkdirSync(JOBS_DIR, { recursive: true });
+
+// ---- auth ------------------------------------------------------------------
+
+const SUPA_URL = process.env.SUPABASE_URL;
+const SUPA_SECRET = process.env.SUPABASE_SECRET_KEY;
+const DEV_AUTH = !SUPA_URL || !SUPA_SECRET;
+if (DEV_AUTH) console.warn("SUPABASE_URL/SUPABASE_SECRET_KEY not set — auth disabled (dev mode)");
+
+type AuthUser = { id: string; email?: string };
+const authCache = new Map<string, { user: AuthUser; exp: number }>();
+
+/** Validate the caller's Supabase access token (Authorization: Bearer …, or
+ * ?token= for media/zip URLs that can't carry headers). */
+async function authenticate(req: IncomingMessage): Promise<AuthUser | null> {
+  if (DEV_AUTH) return { id: "dev" };
+  const header = req.headers.authorization ?? "";
+  const query = new URL(req.url ?? "/", "http://x").searchParams.get("token");
+  const token = header.startsWith("Bearer ") ? header.slice(7) : query;
+  if (!token) return null;
+  const cached = authCache.get(token);
+  if (cached && cached.exp > Date.now()) return cached.user;
+  try {
+    const res = await fetch(`${SUPA_URL}/auth/v1/user`, {
+      headers: { apikey: SUPA_SECRET!, authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const body = (await res.json()) as AuthUser;
+    if (!body.id) return null;
+    const user = { id: body.id, email: body.email };
+    authCache.set(token, { user, exp: Date.now() + 60_000 });
+    return user;
+  } catch {
+    return null;
+  }
+}
+
+// ---- tokens (per user) -----------------------------------------------------
+
+function readJson(path: string): Record<string, number | string> {
+  return existsSync(path) ? JSON.parse(readFileSync(path, "utf8")) : {};
+}
+
+function balance(userId: string): number {
+  return Number(readJson(ACCOUNTS)[userId] ?? 0);
+}
+
+function setBalance(userId: string, tokens: number): void {
+  const all = readJson(ACCOUNTS);
+  all[userId] = tokens;
+  writeFileSync(ACCOUNTS, JSON.stringify(all, null, 2));
+}
+
+// ---- job ownership ---------------------------------------------------------
+
+function jobOwner(id: string): string | null {
+  return (readJson(OWNERS)[id] as string) ?? null;
+}
+
+function setJobOwner(id: string, userId: string): void {
+  const all = readJson(OWNERS);
+  all[id] = userId;
+  writeFileSync(OWNERS, JSON.stringify(all, null, 2));
+}
+
+/** Jobs with no recorded owner predate auth — visible to everyone. */
+function canSee(user: AuthUser, jobId: string): boolean {
+  const owner = jobOwner(jobId);
+  return owner === null || owner === user.id;
 }
 
 // ---- jobs ------------------------------------------------------------------
@@ -92,7 +160,7 @@ function jobDetail(id: string) {
   return { ...summary, clips };
 }
 
-function startJob(id: string, url: string): void {
+function startJob(id: string, url: string, userId: string): void {
   const state = { log: [] as string[], error: null as string | null };
   running.set(id, state);
   const child = spawn("npm", ["run", "reelize", "--", url, "--jobs", JOBS_DIR], {
@@ -113,7 +181,7 @@ function startJob(id: string, url: string): void {
     } else {
       state.error = state.log.slice(-5).join("\n") || `pipeline exited ${code}`;
       // refund on failure
-      setBalance(balance() + TOKENS_PER_VIDEO);
+      setBalance(userId, balance(userId) + TOKENS_PER_VIDEO);
     }
   });
 }
@@ -160,16 +228,19 @@ createServer(async (req, res) => {
   const [path] = (req.url ?? "/").split("?");
   const parts = path.split("/").filter(Boolean);
 
+  const user = await authenticate(req);
+  if (!user) return json(res, 401, { error: "unauthorized — log in again" });
+
   // GET /api/account | POST /api/account/topup {usd}
   if (path === "/api/account" && req.method === "GET") {
-    return json(res, 200, { tokens: balance(), tokensPerVideo: TOKENS_PER_VIDEO });
+    return json(res, 200, { tokens: balance(user.id), tokensPerVideo: TOKENS_PER_VIDEO });
   }
   if (path === "/api/account/topup" && req.method === "POST") {
     const { usd } = await readBody(req);
     const amount = Number(usd);
     if (!Number.isFinite(amount) || amount <= 0) return json(res, 400, { error: "invalid amount" });
-    setBalance(balance() + Math.floor(amount * TOKENS_PER_USD));
-    return json(res, 200, { tokens: balance() });
+    setBalance(user.id, balance(user.id) + Math.floor(amount * TOKENS_PER_USD));
+    return json(res, 200, { tokens: balance(user.id) });
   }
 
   // GET /api/jobs | POST /api/jobs {url}
@@ -178,6 +249,7 @@ createServer(async (req, res) => {
       ? readdirSync(JOBS_DIR, { withFileTypes: true })
           .filter((d) => d.isDirectory())
           .map((d) => d.name)
+          .filter((id) => canSee(user, id))
       : [];
     return json(res, 200, ids.map(jobSummary));
   }
@@ -186,11 +258,12 @@ createServer(async (req, res) => {
     const id = typeof url === "string" ? videoId(url) : null;
     if (!id) return json(res, 400, { error: "not a valid YouTube URL" });
     if (running.has(id)) return json(res, 409, { error: "already processing" });
-    if (balance() < TOKENS_PER_VIDEO) {
-      return json(res, 402, { error: `need ${TOKENS_PER_VIDEO} tokens, have ${balance()}` });
+    if (balance(user.id) < TOKENS_PER_VIDEO) {
+      return json(res, 402, { error: `need ${TOKENS_PER_VIDEO} tokens, have ${balance(user.id)}` });
     }
-    setBalance(balance() - TOKENS_PER_VIDEO);
-    startJob(id, `https://www.youtube.com/watch?v=${id}`);
+    setBalance(user.id, balance(user.id) - TOKENS_PER_VIDEO);
+    setJobOwner(id, user.id);
+    startJob(id, `https://www.youtube.com/watch?v=${id}`, user.id);
     return json(res, 201, jobSummary(id));
   }
 
@@ -199,11 +272,13 @@ createServer(async (req, res) => {
     if (!existsSync(join(JOBS_DIR, parts[2])) && !running.has(parts[2])) {
       return json(res, 404, { error: "no such job" });
     }
+    if (!canSee(user, parts[2])) return json(res, 404, { error: "no such job" });
     return json(res, 200, jobDetail(parts[2]));
   }
 
   // GET /files/:id/clips/:file (video streaming with range support)
   if (parts[0] === "files" && parts[1] && parts[2] === "clips" && parts[3]) {
+    if (!canSee(user, parts[1])) return json(res, 404, { error: "not found" });
     const file = decodeURIComponent(parts[3]);
     if (file.includes("..") || file.includes("/")) return json(res, 400, { error: "bad path" });
     return serveFile(req, res, join(JOBS_DIR, parts[1], "clips", file));
@@ -211,6 +286,7 @@ createServer(async (req, res) => {
 
   // GET /api/jobs/:id/zip — stream all clips as a zip
   if (parts[0] === "api" && parts[1] === "jobs" && parts[2] && parts[3] === "zip") {
+    if (!canSee(user, parts[2])) return json(res, 404, { error: "not found" });
     const clipsDir = join(JOBS_DIR, parts[2], "clips");
     if (!existsSync(clipsDir)) return json(res, 404, { error: "no clips" });
     res.writeHead(200, {
@@ -224,4 +300,4 @@ createServer(async (req, res) => {
   }
 
   json(res, 404, { error: "not found" });
-}).listen(PORT, () => console.log(`reelize api: http://localhost:${PORT}`));
+}).listen(PORT, () => console.log(`reelize api: http://localhost:${PORT}${DEV_AUTH ? " (dev auth)" : " (supabase auth)"}`));

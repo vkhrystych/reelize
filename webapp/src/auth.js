@@ -39,3 +39,10 @@ export async function signOut() {
   if (devMode) localStorage.removeItem("reelize-dev-user");
   else await supabase.auth.signOut();
 }
+
+/** Current access token for API calls; null in dev mode. */
+export async function getToken() {
+  if (devMode) return null;
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token ?? null;
+}

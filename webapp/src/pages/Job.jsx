@@ -1,18 +1,24 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { getJob } from "../api.js";
+import { getJob, mediaUrl } from "../api.js";
 
 export default function Job() {
   const { id } = useParams();
   const [job, setJob] = useState(null);
+  const [zipUrl, setZipUrl] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     let timer;
     const poll = () =>
       getJob(id)
-        .then((j) => {
+        .then(async (j) => {
+          // resolve tokenized media URLs once per poll
+          j.clips = await Promise.all(
+            j.clips.map(async (c) => ({ ...c, src: await mediaUrl(c.url) })),
+          );
           setJob(j);
+          setZipUrl(await mediaUrl(`/api/jobs/${id}/zip`));
           if (j.status === "processing") timer = setTimeout(poll, 4000);
         })
         .catch((e) => setError(e.message));
@@ -29,8 +35,8 @@ export default function Job() {
       <div className="row">
         <h1>{job.title}</h1>
         <span className="spacer" />
-        {job.clips.length > 0 && (
-          <a className="button primary" href={`/api/jobs/${job.id}/zip`}>⬇ Download all (.zip)</a>
+        {job.clips.length > 0 && zipUrl && (
+          <a className="button primary" href={zipUrl}>⬇ Download all (.zip)</a>
         )}
       </div>
 
@@ -48,13 +54,13 @@ export default function Job() {
       )}
 
       <div className="grid">
-        {job.clips.map(({ file, url, pick }) => (
+        {job.clips.map(({ file, src, pick }) => (
           <div key={file} className="card clip">
-            <video src={url} controls preload="metadata" />
+            <video src={src} controls preload="metadata" />
             <div className="pad">
               <div className="title">{pick ? `#${pick.rank} — ${pick.title}` : file}</div>
               {pick && <p className="muted small">{pick.why}</p>}
-              <a className="button" href={url} download={file}>⬇ Download</a>
+              <a className="button" href={src} download={file}>⬇ Download</a>
             </div>
           </div>
         ))}
