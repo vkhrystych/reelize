@@ -5,7 +5,7 @@
  */
 import { spawn } from "node:child_process";
 import { createReadStream, existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
-import { mkdirSync, readdirSync } from "node:fs";
+import { mkdirSync, readdirSync, rmSync } from "node:fs";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -265,6 +265,20 @@ createServer(async (req, res) => {
     setJobOwner(id, user.id);
     startJob(id, `https://www.youtube.com/watch?v=${id}`, user.id);
     return json(res, 201, jobSummary(id));
+  }
+
+  // DELETE /api/jobs/:id
+  if (parts[0] === "api" && parts[1] === "jobs" && parts.length === 3 && req.method === "DELETE") {
+    const id = parts[2];
+    if (!existsSync(join(JOBS_DIR, id)) || !canSee(user, id)) {
+      return json(res, 404, { error: "no such job" });
+    }
+    if (running.has(id)) return json(res, 409, { error: "still processing — wait for it to finish" });
+    rmSync(join(JOBS_DIR, id), { recursive: true, force: true });
+    const owners = readJson(OWNERS);
+    delete owners[id];
+    writeFileSync(OWNERS, JSON.stringify(owners, null, 2));
+    return json(res, 200, { ok: true });
   }
 
   // GET /api/jobs/:id

@@ -25,6 +25,7 @@ export const listJobs = () => request("/api/jobs");
 export const getJob = (id) => request(`/api/jobs/${id}`);
 export const createJob = (url) =>
   request("/api/jobs", { method: "POST", body: JSON.stringify({ url }) });
+export const deleteJob = (id) => request(`/api/jobs/${id}`, { method: "DELETE" });
 
 /** <video src>, download links, and zip can't send headers — carry the token
  * as a query param instead (the API accepts both). */

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Coins, Film, Plus, Scissors } from "lucide-react";
-import { createJob, getAccount, listJobs, topUp } from "../api.js";
+import { Coins, Film, Plus, Scissors, Trash2 } from "lucide-react";
+import { createJob, deleteJob, getAccount, listJobs, topUp } from "../api.js";
 import { Badge, Button, Card, Dialog, Input, Spinner } from "../components/ui.jsx";
 
 const statusVariant = { done: "success", processing: "warning", error: "error", incomplete: "outline" };
@@ -14,6 +14,8 @@ export default function Dashboard() {
   const [busy, setBusy] = useState(false);
   const [topupOpen, setTopupOpen] = useState(false);
   const [usd, setUsd] = useState("5");
+  const [toDelete, setToDelete] = useState(null); // job pending confirm
+  const [deleting, setDeleting] = useState(false);
   const navigate = useNavigate();
 
   const refresh = () => {
@@ -97,6 +99,14 @@ export default function Dashboard() {
                     <Film className="h-3.5 w-3.5" /> {job.clipCount} clips
                   </span>
                 )}
+                <Button
+                  variant="ghost" size="icon" title="Delete"
+                  className="h-7 w-7 text-muted-foreground hover:text-red-400"
+                  disabled={job.status === "processing"}
+                  onClick={(e) => { e.stopPropagation(); setToDelete(job); }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           </Card>
@@ -105,6 +115,35 @@ export default function Dashboard() {
           <p className="text-sm text-muted-foreground">No videos yet — paste a link above.</p>
         )}
       </div>
+
+      <Dialog
+        open={!!toDelete}
+        onClose={() => setToDelete(null)}
+        title="Delete this video?"
+        description={toDelete ? `"${toDelete.title}" and all its clips will be removed. This can't be undone.` : ""}
+      >
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" onClick={() => setToDelete(null)}>Cancel</Button>
+          <Button
+            variant="destructive" disabled={deleting}
+            onClick={async () => {
+              setDeleting(true);
+              try {
+                await deleteJob(toDelete.id);
+                setToDelete(null);
+                refresh();
+              } catch (err) {
+                setError(err.message);
+                setToDelete(null);
+              } finally {
+                setDeleting(false);
+              }
+            }}
+          >
+            {deleting && <Spinner />} Delete
+          </Button>
+        </div>
+      </Dialog>
 
       <Dialog
         open={topupOpen}
