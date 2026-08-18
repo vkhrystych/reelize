@@ -1,0 +1,111 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial Black,80,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,1,0,1,10,4,2,70,70,470,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:00.24,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}THAT{\1c&HFFFFFF&\fscx100\fscy100} I MENTIONED DEPEND
+Dialogue: 0,0:00:00.24,0:00:00.40,Default,,0,0,0,,THAT {\1c&H17D0FD&\fscx106\fscy106}I{\1c&HFFFFFF&\fscx100\fscy100} MENTIONED DEPEND
+Dialogue: 0,0:00:00.40,0:00:01.12,Default,,0,0,0,,THAT I {\1c&H17D0FD&\fscx106\fscy106}MENTIONED{\1c&HFFFFFF&\fscx100\fscy100} DEPEND
+Dialogue: 0,0:00:01.12,0:00:01.36,Default,,0,0,0,,THAT I MENTIONED {\1c&H17D0FD&\fscx106\fscy106}DEPEND{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:01.36,0:00:01.60,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}ON{\1c&HFFFFFF&\fscx100\fscy100} YOU.
+Dialogue: 0,0:00:01.60,0:00:03.20,Default,,0,0,0,,ON {\1c&H17D0FD&\fscx106\fscy106}YOU.{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:03.68,0:00:03.92,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}BUT{\1c&HFFFFFF&\fscx100\fscy100} YOU'RE JUST ONE
+Dialogue: 0,0:00:03.92,0:00:04.08,Default,,0,0,0,,BUT {\1c&H17D0FD&\fscx106\fscy106}YOU'RE{\1c&HFFFFFF&\fscx100\fscy100} JUST ONE
+Dialogue: 0,0:00:04.08,0:00:04.32,Default,,0,0,0,,BUT YOU'RE {\1c&H17D0FD&\fscx106\fscy106}JUST{\1c&HFFFFFF&\fscx100\fscy100} ONE
+Dialogue: 0,0:00:04.32,0:00:04.56,Default,,0,0,0,,BUT YOU'RE JUST {\1c&H17D0FD&\fscx106\fscy106}ONE{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:04.56,0:00:05.52,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}HUMAN{\1c&HFFFFFF&\fscx100\fscy100} LIKE WE MENTIONED
+Dialogue: 0,0:00:05.52,0:00:05.76,Default,,0,0,0,,HUMAN {\1c&H17D0FD&\fscx106\fscy106}LIKE{\1c&HFFFFFF&\fscx100\fscy100} WE MENTIONED
+Dialogue: 0,0:00:05.76,0:00:05.92,Default,,0,0,0,,HUMAN LIKE {\1c&H17D0FD&\fscx106\fscy106}WE{\1c&HFFFFFF&\fscx100\fscy100} MENTIONED
+Dialogue: 0,0:00:05.92,0:00:07.04,Default,,0,0,0,,HUMAN LIKE WE {\1c&H17D0FD&\fscx106\fscy106}MENTIONED{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:07.20,0:00:07.68,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}MORTAL{\1c&HFFFFFF&\fscx100\fscy100} LIKE ALL OF
+Dialogue: 0,0:00:07.68,0:00:07.92,Default,,0,0,0,,MORTAL {\1c&H17D0FD&\fscx106\fscy106}LIKE{\1c&HFFFFFF&\fscx100\fscy100} ALL OF
+Dialogue: 0,0:00:07.92,0:00:08.08,Default,,0,0,0,,MORTAL LIKE {\1c&H17D0FD&\fscx106\fscy106}ALL{\1c&HFFFFFF&\fscx100\fscy100} OF
+Dialogue: 0,0:00:08.08,0:00:08.24,Default,,0,0,0,,MORTAL LIKE ALL {\1c&H17D0FD&\fscx106\fscy106}OF{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:08.24,0:00:08.80,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}US.{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:08.80,0:00:08.96,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}DO{\1c&HFFFFFF&\fscx100\fscy100} YOU THINK ABOUT
+Dialogue: 0,0:00:08.96,0:00:09.12,Default,,0,0,0,,DO {\1c&H17D0FD&\fscx106\fscy106}YOU{\1c&HFFFFFF&\fscx100\fscy100} THINK ABOUT
+Dialogue: 0,0:00:09.12,0:00:09.28,Default,,0,0,0,,DO YOU {\1c&H17D0FD&\fscx106\fscy106}THINK{\1c&HFFFFFF&\fscx100\fscy100} ABOUT
+Dialogue: 0,0:00:09.28,0:00:09.52,Default,,0,0,0,,DO YOU THINK {\1c&H17D0FD&\fscx106\fscy106}ABOUT{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:09.52,0:00:09.76,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}YOUR{\1c&HFFFFFF&\fscx100\fscy100} MORTALITY?
+Dialogue: 0,0:00:09.76,0:00:10.88,Default,,0,0,0,,YOUR {\1c&H17D0FD&\fscx106\fscy106}MORTALITY?{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:10.88,0:00:11.04,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}ARE{\1c&HFFFFFF&\fscx100\fscy100} YOU AFRAID OF
+Dialogue: 0,0:00:11.04,0:00:11.20,Default,,0,0,0,,ARE {\1c&H17D0FD&\fscx106\fscy106}YOU{\1c&HFFFFFF&\fscx100\fscy100} AFRAID OF
+Dialogue: 0,0:00:11.20,0:00:11.76,Default,,0,0,0,,ARE YOU {\1c&H17D0FD&\fscx106\fscy106}AFRAID{\1c&HFFFFFF&\fscx100\fscy100} OF
+Dialogue: 0,0:00:11.76,0:00:12.00,Default,,0,0,0,,ARE YOU AFRAID {\1c&H17D0FD&\fscx106\fscy106}OF{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:12.00,0:00:14.40,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}DEATH?{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:14.40,0:00:14.88,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}>> I{\1c&HFFFFFF&\fscx100\fscy100} REALLY DON'T WANT
+Dialogue: 0,0:00:14.88,0:00:15.12,Default,,0,0,0,,>> I {\1c&H17D0FD&\fscx106\fscy106}REALLY{\1c&HFFFFFF&\fscx100\fscy100} DON'T WANT
+Dialogue: 0,0:00:15.12,0:00:15.36,Default,,0,0,0,,>> I REALLY {\1c&H17D0FD&\fscx106\fscy106}DON'T{\1c&HFFFFFF&\fscx100\fscy100} WANT
+Dialogue: 0,0:00:15.36,0:00:15.44,Default,,0,0,0,,>> I REALLY DON'T {\1c&H17D0FD&\fscx106\fscy106}WANT{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:15.44,0:00:15.60,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}TO{\1c&HFFFFFF&\fscx100\fscy100} DIE.
+Dialogue: 0,0:00:15.60,0:00:16.72,Default,,0,0,0,,TO {\1c&H17D0FD&\fscx106\fscy106}DIE.{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:17.12,0:00:17.28,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}I{\1c&HFFFFFF&\fscx100\fscy100} HAVE A GREAT
+Dialogue: 0,0:00:17.28,0:00:17.36,Default,,0,0,0,,I {\1c&H17D0FD&\fscx106\fscy106}HAVE{\1c&HFFFFFF&\fscx100\fscy100} A GREAT
+Dialogue: 0,0:00:17.36,0:00:17.60,Default,,0,0,0,,I HAVE {\1c&H17D0FD&\fscx106\fscy106}A{\1c&HFFFFFF&\fscx100\fscy100} GREAT
+Dialogue: 0,0:00:17.60,0:00:17.76,Default,,0,0,0,,I HAVE A {\1c&H17D0FD&\fscx106\fscy106}GREAT{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:17.76,0:00:18.08,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}LIFE.{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:18.08,0:00:18.16,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}I{\1c&HFFFFFF&\fscx100\fscy100} HAVE A GREAT
+Dialogue: 0,0:00:18.16,0:00:18.40,Default,,0,0,0,,I {\1c&H17D0FD&\fscx106\fscy106}HAVE{\1c&HFFFFFF&\fscx100\fscy100} A GREAT
+Dialogue: 0,0:00:18.40,0:00:18.56,Default,,0,0,0,,I HAVE {\1c&H17D0FD&\fscx106\fscy106}A{\1c&HFFFFFF&\fscx100\fscy100} GREAT
+Dialogue: 0,0:00:18.56,0:00:18.88,Default,,0,0,0,,I HAVE A {\1c&H17D0FD&\fscx106\fscy106}GREAT{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:18.88,0:00:20.88,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}FAMILY.{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:20.88,0:00:22.32,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}I{\1c&HFFFFFF&\fscx100\fscy100} HAVE REALLY IMPORTANT
+Dialogue: 0,0:00:22.32,0:00:22.48,Default,,0,0,0,,I {\1c&H17D0FD&\fscx106\fscy106}HAVE{\1c&HFFFFFF&\fscx100\fscy100} REALLY IMPORTANT
+Dialogue: 0,0:00:22.48,0:00:22.72,Default,,0,0,0,,I HAVE {\1c&H17D0FD&\fscx106\fscy106}REALLY{\1c&HFFFFFF&\fscx100\fscy100} IMPORTANT
+Dialogue: 0,0:00:22.72,0:00:23.12,Default,,0,0,0,,I HAVE REALLY {\1c&H17D0FD&\fscx106\fscy106}IMPORTANT{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:23.12,0:00:25.12,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}WORK.{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:26.64,0:00:26.88,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}THIS{\1c&HFFFFFF&\fscx100\fscy100} IS THIS IS
+Dialogue: 0,0:00:26.88,0:00:27.60,Default,,0,0,0,,THIS {\1c&H17D0FD&\fscx106\fscy106}IS{\1c&HFFFFFF&\fscx100\fscy100} THIS IS
+Dialogue: 0,0:00:27.60,0:00:27.84,Default,,0,0,0,,THIS IS {\1c&H17D0FD&\fscx106\fscy106}THIS{\1c&HFFFFFF&\fscx100\fscy100} IS
+Dialogue: 0,0:00:27.84,0:00:28.00,Default,,0,0,0,,THIS IS THIS {\1c&H17D0FD&\fscx106\fscy106}IS{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:28.00,0:00:28.24,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}NOT{\1c&HFFFFFF&\fscx100\fscy100} A ONCE IN
+Dialogue: 0,0:00:28.24,0:00:28.48,Default,,0,0,0,,NOT {\1c&H17D0FD&\fscx106\fscy106}A{\1c&HFFFFFF&\fscx100\fscy100} ONCE IN
+Dialogue: 0,0:00:28.48,0:00:28.80,Default,,0,0,0,,NOT A {\1c&H17D0FD&\fscx106\fscy106}ONCE{\1c&HFFFFFF&\fscx100\fscy100} IN
+Dialogue: 0,0:00:28.80,0:00:28.96,Default,,0,0,0,,NOT A ONCE {\1c&H17D0FD&\fscx106\fscy106}IN{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:28.96,0:00:30.40,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}A{\1c&HFFFFFF&\fscx100\fscy100} ONCE IN A
+Dialogue: 0,0:00:30.40,0:00:30.80,Default,,0,0,0,,A {\1c&H17D0FD&\fscx106\fscy106}ONCE{\1c&HFFFFFF&\fscx100\fscy100} IN A
+Dialogue: 0,0:00:30.80,0:00:30.96,Default,,0,0,0,,A ONCE {\1c&H17D0FD&\fscx106\fscy106}IN{\1c&HFFFFFF&\fscx100\fscy100} A
+Dialogue: 0,0:00:30.96,0:00:31.28,Default,,0,0,0,,A ONCE IN {\1c&H17D0FD&\fscx106\fscy106}A{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:31.28,0:00:32.16,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}LIFETIME{\1c&HFFFFFF&\fscx100\fscy100} EXPERIENCE SUGGESTS THAT
+Dialogue: 0,0:00:32.16,0:00:32.80,Default,,0,0,0,,LIFETIME {\1c&H17D0FD&\fscx106\fscy106}EXPERIENCE{\1c&HFFFFFF&\fscx100\fscy100} SUGGESTS THAT
+Dialogue: 0,0:00:32.80,0:00:34.08,Default,,0,0,0,,LIFETIME EXPERIENCE {\1c&H17D0FD&\fscx106\fscy106}SUGGESTS{\1c&HFFFFFF&\fscx100\fscy100} THAT
+Dialogue: 0,0:00:34.08,0:00:34.40,Default,,0,0,0,,LIFETIME EXPERIENCE SUGGESTS {\1c&H17D0FD&\fscx106\fscy106}THAT{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:34.40,0:00:34.64,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}IT{\1c&HFFFFFF&\fscx100\fscy100} HAS BEEN EXPERIENCED
+Dialogue: 0,0:00:34.64,0:00:34.88,Default,,0,0,0,,IT {\1c&H17D0FD&\fscx106\fscy106}HAS{\1c&HFFFFFF&\fscx100\fscy100} BEEN EXPERIENCED
+Dialogue: 0,0:00:34.88,0:00:35.12,Default,,0,0,0,,IT HAS {\1c&H17D0FD&\fscx106\fscy106}BEEN{\1c&HFFFFFF&\fscx100\fscy100} EXPERIENCED
+Dialogue: 0,0:00:35.12,0:00:35.84,Default,,0,0,0,,IT HAS BEEN {\1c&H17D0FD&\fscx106\fscy106}EXPERIENCED{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:35.84,0:00:36.08,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}BY{\1c&HFFFFFF&\fscx100\fscy100} MANY PEOPLE JUST
+Dialogue: 0,0:00:36.08,0:00:36.48,Default,,0,0,0,,BY {\1c&H17D0FD&\fscx106\fscy106}MANY{\1c&HFFFFFF&\fscx100\fscy100} PEOPLE JUST
+Dialogue: 0,0:00:36.48,0:00:37.04,Default,,0,0,0,,BY MANY {\1c&H17D0FD&\fscx106\fscy106}PEOPLE{\1c&HFFFFFF&\fscx100\fscy100} JUST
+Dialogue: 0,0:00:37.04,0:00:37.36,Default,,0,0,0,,BY MANY PEOPLE {\1c&H17D0FD&\fscx106\fscy106}JUST{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:37.36,0:00:37.68,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}NOT{\1c&HFFFFFF&\fscx100\fscy100} ONE PERSON.
+Dialogue: 0,0:00:37.68,0:00:38.00,Default,,0,0,0,,NOT {\1c&H17D0FD&\fscx106\fscy106}ONE{\1c&HFFFFFF&\fscx100\fscy100} PERSON.
+Dialogue: 0,0:00:38.00,0:00:38.96,Default,,0,0,0,,NOT ONE {\1c&H17D0FD&\fscx106\fscy106}PERSON.{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:39.28,0:00:39.44,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}THIS{\1c&HFFFFFF&\fscx100\fscy100} IS A ONCE
+Dialogue: 0,0:00:39.44,0:00:39.60,Default,,0,0,0,,THIS {\1c&H17D0FD&\fscx106\fscy106}IS{\1c&HFFFFFF&\fscx100\fscy100} A ONCE
+Dialogue: 0,0:00:39.60,0:00:39.84,Default,,0,0,0,,THIS IS {\1c&H17D0FD&\fscx106\fscy106}A{\1c&HFFFFFF&\fscx100\fscy100} ONCE
+Dialogue: 0,0:00:39.84,0:00:40.08,Default,,0,0,0,,THIS IS A {\1c&H17D0FD&\fscx106\fscy106}ONCE{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:40.08,0:00:40.24,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}IN{\1c&HFFFFFF&\fscx100\fscy100} A HUMANITY EXPERIENCE
+Dialogue: 0,0:00:40.24,0:00:40.48,Default,,0,0,0,,IN {\1c&H17D0FD&\fscx106\fscy106}A{\1c&HFFFFFF&\fscx100\fscy100} HUMANITY EXPERIENCE
+Dialogue: 0,0:00:40.48,0:00:40.96,Default,,0,0,0,,IN A {\1c&H17D0FD&\fscx106\fscy106}HUMANITY{\1c&HFFFFFF&\fscx100\fscy100} EXPERIENCE
+Dialogue: 0,0:00:40.96,0:00:42.08,Default,,0,0,0,,IN A HUMANITY {\1c&H17D0FD&\fscx106\fscy106}EXPERIENCE{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:42.08,0:00:42.32,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}WHAT{\1c&HFFFFFF&\fscx100\fscy100} I'M GOING THROUGH.
+Dialogue: 0,0:00:42.32,0:00:42.56,Default,,0,0,0,,WHAT {\1c&H17D0FD&\fscx106\fscy106}I'M{\1c&HFFFFFF&\fscx100\fscy100} GOING THROUGH.
+Dialogue: 0,0:00:42.56,0:00:42.72,Default,,0,0,0,,WHAT I'M {\1c&H17D0FD&\fscx106\fscy106}GOING{\1c&HFFFFFF&\fscx100\fscy100} THROUGH.
+Dialogue: 0,0:00:42.72,0:00:43.76,Default,,0,0,0,,WHAT I'M GOING {\1c&H17D0FD&\fscx106\fscy106}THROUGH.{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:44.00,0:00:44.48,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}NVIDIA{\1c&HFFFFFF&\fscx100\fscy100} IS ONE OF
+Dialogue: 0,0:00:44.48,0:00:44.72,Default,,0,0,0,,NVIDIA {\1c&H17D0FD&\fscx106\fscy106}IS{\1c&HFFFFFF&\fscx100\fscy100} ONE OF
+Dialogue: 0,0:00:44.72,0:00:44.80,Default,,0,0,0,,NVIDIA IS {\1c&H17D0FD&\fscx106\fscy106}ONE{\1c&HFFFFFF&\fscx100\fscy100} OF
+Dialogue: 0,0:00:44.80,0:00:44.88,Default,,0,0,0,,NVIDIA IS ONE {\1c&H17D0FD&\fscx106\fscy106}OF{\1c&HFFFFFF&\fscx100\fscy100}
+Dialogue: 0,0:00:44.88,0:00:45.04,Default,,0,0,0,,{\1c&H17D0FD&\fscx106\fscy106}THE{\1c&HFFFFFF&\fscx100\fscy100} MOST CONSEQUENTIAL TECHNOLOGY
+Dialogue: 0,0:00:45.04,0:00:45.20,Default,,0,0,0,,THE {\1c&H17D0FD&\fscx106\fscy106}MOST{\1c&HFFFFFF&\fscx100\fscy100} CONSEQUENTIAL TECHNOLOGY
+Dialogue: 0,0:00:45.20,0:00:45.76,Default,,0,0,0,,THE MOST {\1c&H17D0FD&\fscx106\fscy106}CONSEQUENTIAL{\1c&HFFFFFF&\fscx100\fscy100} TECHNOLOGY
+Dialogue: 0,0:00:45.76,0:00:46.36,Default,,0,0,0,,THE MOST CONSEQUENTIAL {\1c&H17D0FD&\fscx106\fscy106}TECHNOLOGY{\1c&HFFFFFF&\fscx100\fscy100}
