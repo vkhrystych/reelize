@@ -138,6 +138,8 @@ function jobSummary(id: string) {
       if (m) stage = m[1];
     }
   }
+  const statsFile = join(dir, "stats.json");
+  const stats = existsSync(statsFile) ? JSON.parse(readFileSync(statsFile, "utf8")) : null;
   return {
     id,
     title: meta.title ?? id,
@@ -145,6 +147,7 @@ function jobSummary(id: string) {
     status,
     stage,
     clipCount: clips.length,
+    elapsedMs: stats?.elapsedMs ?? null,
     error: live?.error ?? null,
     lastLog: live?.log.slice(-3) ?? [],
   };
@@ -172,6 +175,7 @@ function jobDetail(id: string) {
 function startJob(id: string, url: string, userId: string): void {
   const state = { log: [] as string[], error: null as string | null };
   running.set(id, state);
+  const startedAt = Date.now();
   const child = spawn("npm", ["run", "reelize", "--", url, "--jobs", JOBS_DIR], {
     cwd: CLI_DIR,
     stdio: ["ignore", "pipe", "pipe"],
@@ -186,6 +190,10 @@ function startJob(id: string, url: string, userId: string): void {
   child.stderr.on("data", collect);
   child.on("close", (code) => {
     if (code === 0) {
+      writeFileSync(
+        join(JOBS_DIR, id, "stats.json"),
+        JSON.stringify({ elapsedMs: Date.now() - startedAt, finishedAt: Date.now() }),
+      );
       running.delete(id);
     } else {
       state.error = state.log.slice(-5).join("\n") || `pipeline exited ${code}`;

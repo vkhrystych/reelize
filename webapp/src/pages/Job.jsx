@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Check, Download } from "lucide-react";
+import { ArrowLeft, Check, Clock, Download, Zap } from "lucide-react";
 import { getJob, mediaUrl } from "../api.js";
 import { Button, Card, Spinner, cn } from "../components/ui.jsx";
 
@@ -11,6 +11,37 @@ const STEPS = [
   { key: "plan", label: "Planning the cuts" },
   { key: "render", label: "Rendering the reelz" },
 ];
+
+// rough manual-editing effort a finished clip replaces: find the moment,
+// reframe to 9:16, caption word-by-word
+const MANUAL_MIN_PER_CLIP = 10;
+
+function fmtDuration(totalSec) {
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = Math.round(totalSec % 60);
+  if (h > 0) return `${h} h ${m} min`;
+  if (m > 0) return s > 0 ? `${m} min ${s} s` : `${m} min`;
+  return `${s} s`;
+}
+
+function StatsStrip({ job }) {
+  const saved = job.clips.length * MANUAL_MIN_PER_CLIP * 60;
+  return (
+    <div className="mb-6 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-border bg-card px-4 py-3 text-sm">
+      {job.elapsedMs != null && (
+        <span className="flex items-center gap-2">
+          <Zap className="h-4 w-4 text-amber-400" />
+          Finished the job in <strong>{fmtDuration(job.elapsedMs / 1000)}</strong>
+        </span>
+      )}
+      <span className="flex items-center gap-2">
+        <Clock className="h-4 w-4 text-emerald-400" />
+        Saved <strong>~{fmtDuration(saved)}</strong> of manual editing work
+      </span>
+    </div>
+  );
+}
 
 function StageStepper({ stage }) {
   const current = Math.max(0, STEPS.findIndex((s) => s.key === stage));
@@ -93,6 +124,8 @@ export default function Job() {
           </Button>
         )}
       </div>
+
+      {job.status === "done" && job.clips.length > 0 && <StatsStrip job={job} />}
 
       {job.status === "processing" && (
         <Card className="mb-6 p-5">
