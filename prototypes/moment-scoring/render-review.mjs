@@ -36,6 +36,8 @@ const html = `<!doctype html>
 <style>
   body { font: 16px/1.5 -apple-system, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; background:#111; color:#eee; }
   .banner { background:#5a2; color:#fff; padding:.5rem 1rem; border-radius:8px; font-weight:600; }
+  .howto { background:#1c1c1c; border:1px solid #333; border-radius:8px; padding:.8rem 1rem .8rem 2.2rem; }
+  .howto li { margin:.25rem 0; }
   .card { border:1px solid #333; border-radius:12px; padding:1rem; margin:1.5rem 0; }
   .card header { display:flex; gap:.6rem; align-items:baseline; flex-wrap:wrap; }
   .rank { font-weight:800; color:#f80; }
@@ -49,7 +51,12 @@ const html = `<!doctype html>
   .verdict button.on { background:#f80; color:#000; border-color:#f80; }
   #export { position:fixed; bottom:1rem; right:1rem; padding:.6rem 1rem; border-radius:10px; border:0; background:#f80; color:#000; font-weight:700; cursor:pointer; }
 </style>
-<p class="banner">PROTOTYPE — wipe me. Wayfinder ticket 03: react to each pick, then hit “Copy verdicts”.</p>
+<p class="banner">PROTOTYPE — wipe me. Claude picked ${data.picks.length} clip-worthy moments from this video. Your job: judge the picks.</p>
+<ol class="howto">
+  <li>Press play on a card — the clip plays right here, already cut to its start/end.</li>
+  <li>Click one verdict button under it: 🔥 would post · 🤔 maybe · 🗑 would not post.</li>
+  <li>After all ${data.picks.length}, hit the orange <strong>Copy verdicts</strong> button (bottom-right) and paste the result back to Claude.</li>
+</ol>
 <h1>${esc(data.video.title)}</h1>
 <p>${data.picks.length} picks · ${data.prompt_version} · transcript: ${esc(data.video.transcript_source)}</p>
 ${data.picks.map(card).join("\n")}
