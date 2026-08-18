@@ -120,7 +120,7 @@ function jobSummary(id: string) {
     : { id, title: id };
   const clipsDir = join(dir, "clips");
   const clips = existsSync(clipsDir)
-    ? readdirSync(clipsDir).filter((f) => f.endsWith(".mp4")).sort()
+    ? readdirSync(clipsDir).filter((f) => f.endsWith(".mp4") && !f.startsWith(".")).sort()
     : [];
   const live = running.get(id);
   const status = live
@@ -158,7 +158,7 @@ function jobDetail(id: string) {
   const clipsDir = join(dir, "clips");
   const clips = existsSync(clipsDir)
     ? readdirSync(clipsDir)
-        .filter((f) => f.endsWith(".mp4"))
+        .filter((f) => f.endsWith(".mp4") && !f.startsWith("."))
         .sort()
         .map((file) => {
           const rank = Number(file.split("-")[0]);
@@ -217,23 +217,38 @@ function serveFile(req: IncomingMessage, res: ServerResponse, path: string): voi
   const { size } = statSync(path);
   const type = path.endsWith(".mp4") ? "video/mp4" : "application/octet-stream";
   const range = /bytes=(\d+)-(\d*)/.exec(req.headers.range ?? "");
-  if (range) {
+  if (range && size > 0) {
     const start = Number(range[1]);
-    const end = range[2] ? Number(range[2]) : size - 1;
+    const end = Math.min(range[2] ? Number(range[2]) : size - 1, size - 1);
+    if (start >= size || start > end) {
+      res.writeHead(416, { "content-range": `bytes */${size}` });
+      res.end();
+      return;
+    }
     res.writeHead(206, {
       "content-type": type,
       "content-range": `bytes ${start}-${end}/${size}`,
       "content-length": end - start + 1,
       "accept-ranges": "bytes",
     });
-    createReadStream(path, { start, end }).pipe(res);
+    createReadStream(path, { start, end }).on("error", () => res.destroy()).pipe(res);
   } else {
     res.writeHead(200, { "content-type": type, "content-length": size, "accept-ranges": "bytes" });
-    createReadStream(path).pipe(res);
+    createReadStream(path).on("error", () => res.destroy()).pipe(res);
   }
 }
 
 createServer(async (req, res) => {
+  try {
+    await handle(req, res);
+  } catch (err) {
+    console.error("request failed:", err);
+    if (!res.headersSent) json(res, 500, { error: "internal error" });
+    else res.destroy();
+  }
+}).listen(PORT, () => console.log(`reelize api: http://localhost:${PORT}${DEV_AUTH ? " (dev auth)" : " (supabase auth)"}`));
+
+async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const [path] = (req.url ?? "/").split("?");
   const parts = path.split("/").filter(Boolean);
 
@@ -323,4 +338,4 @@ createServer(async (req, res) => {
   }
 
   json(res, 404, { error: "not found" });
-}).listen(PORT, () => console.log(`reelize api: http://localhost:${PORT}${DEV_AUTH ? " (dev auth)" : " (supabase auth)"}`));
+}

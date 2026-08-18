@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { ClipPlan, JobPaths, Options, Pick, Scene } from "../lib/types.ts";
 import { ffmpegPath, log, run } from "../lib/run.ts";
@@ -55,10 +55,13 @@ async function renderClip(paths: JobPaths, plan: ClipPlan): Promise<string> {
       "-c:v", "libx264", "-preset", "fast", "-crf", "20",
       "-pix_fmt", "yuv420p",
       "-c:a", "aac", "-b:a", "160k",
-      `clips/${outName}`,
+      // temp name + rename: a clip only becomes visible once fully written,
+      // so a killed render or a mid-write poll never exposes a truncated file
+      `clips/.tmp-${outName}`,
     ],
     { quiet: true, cwd: paths.dir },
   );
+  await rename(join(paths.clipsDir, `.tmp-${outName}`), outPath);
   return outName;
 }
 
@@ -135,6 +138,8 @@ export async function render(paths: JobPaths, opts: Options): Promise<void> {
 
   const meta = JSON.parse(await readFile(paths.meta, "utf8"));
   await writeFile(paths.review, reviewPage(meta.title ?? "job", entries));
-  const count = (await readdir(paths.clipsDir)).filter((f) => f.endsWith(".mp4")).length;
+  const count = (await readdir(paths.clipsDir)).filter(
+    (f) => f.endsWith(".mp4") && !f.startsWith("."),
+  ).length;
   log("render", `${count} clip(s) in ${paths.clipsDir}; review page: ${paths.review}`);
 }
