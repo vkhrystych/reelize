@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Coins, Film, Plus, Scissors, Trash2 } from "lucide-react";
-import { createJob, deleteJob, getAccount, listJobs, topUp } from "../api.js";
-import { Badge, Button, Card, Dialog, Input, Spinner } from "../components/ui.jsx";
+import { Coins, Film, Plus, Scissors, Trash2, Upload } from "lucide-react";
+import { createJob, deleteJob, getAccount, listJobs, topUp, uploadJob } from "../api.js";
+import { Badge, Button, Card, ClapperLoader, Dialog, Input, Spinner } from "../components/ui.jsx";
 
 const statusVariant = { done: "success", processing: "warning", error: "error", incomplete: "outline" };
 
 export default function Dashboard() {
   const [account, setAccount] = useState(null);
-  const [jobs, setJobs] = useState([]);
+  const [jobs, setJobs] = useState(null); // null = first fetch in flight
   const [url, setUrl] = useState("");
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -16,6 +16,8 @@ export default function Dashboard() {
   const [usd, setUsd] = useState("5");
   const [toDelete, setToDelete] = useState(null); // job pending confirm
   const [deleting, setDeleting] = useState(false);
+  const [uploadPct, setUploadPct] = useState(null); // null = no upload in flight
+  const fileRef = useRef(null);
   const navigate = useNavigate();
 
   const refresh = () => {
@@ -52,6 +54,22 @@ export default function Dashboard() {
     }
   };
 
+  const onFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-picking the same file
+    if (!file) return;
+    setError(null);
+    setUploadPct(0);
+    try {
+      const job = await uploadJob(file, setUploadPct);
+      navigate(`/jobs/${job.id}`);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setUploadPct(null);
+    }
+  };
+
   return (
     <main className="mx-auto max-w-5xl px-6 py-8">
       <div className="mb-6 flex items-center gap-3">
@@ -69,16 +87,27 @@ export default function Dashboard() {
         <form className="flex gap-3" onSubmit={submit}>
           <Input placeholder="Paste a YouTube link…" value={url} required
                  onChange={(e) => setUrl(e.target.value)} />
-          <Button disabled={busy} className="shrink-0">
+          <Button disabled={busy || uploadPct !== null} className="shrink-0">
             {busy ? <Spinner /> : <Scissors className="h-4 w-4" />}
-            Cut it · {account?.tokensPerVideo ?? 10} tokens
+            Cut it · {account?.tokensPerMinute ?? 1} token/min
           </Button>
+          <Button
+            type="button" variant="outline" className="shrink-0"
+            disabled={busy || uploadPct !== null}
+            onClick={() => fileRef.current?.click()}
+          >
+            {uploadPct !== null ? <Spinner /> : <Upload className="h-4 w-4" />}
+            {uploadPct !== null ? `Uploading ${uploadPct}%` : "Upload video"}
+          </Button>
+          <input ref={fileRef} type="file" accept="video/*" className="hidden" onChange={onFile} />
         </form>
       </Card>
       {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
 
+      {jobs === null && <ClapperLoader label="Rolling in your reelz…" />}
+
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {jobs.map((job) => (
+        {(jobs ?? []).map((job) => (
           <Card
             key={job.id}
             className="cursor-pointer overflow-hidden transition-colors hover:border-zinc-600"
@@ -111,7 +140,7 @@ export default function Dashboard() {
             </div>
           </Card>
         ))}
-        {jobs.length === 0 && (
+        {jobs?.length === 0 && (
           <p className="text-sm text-muted-foreground">No videos yet — paste a link above.</p>
         )}
       </div>
@@ -149,7 +178,7 @@ export default function Dashboard() {
         open={topupOpen}
         onClose={() => setTopupOpen(false)}
         title="Add tokens"
-        description="$1 = 10 tokens · one video costs 10 tokens."
+        description="$1 = 10 tokens · a video costs 1 token per minute (min 10). A 1-hour video = 60 tokens = $6."
       >
         <form className="flex gap-3" onSubmit={confirmTopUp}>
           <div className="relative flex-1">

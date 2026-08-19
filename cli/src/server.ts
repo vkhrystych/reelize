@@ -4,10 +4,12 @@
  * Run: npm run serve (from cli/) → http://localhost:5177
  */
 import { spawn } from "node:child_process";
-import { createReadStream, existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { randomBytes } from "node:crypto";
+import { createReadStream, createWriteStream, existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { mkdirSync, readdirSync, rmSync } from "node:fs";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { dirname, join } from "node:path";
+import { pipeline } from "node:stream/promises";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -17,8 +19,19 @@ const JOBS_DIR = join(REPO_ROOT, "jobs");
 const ACCOUNTS = join(JOBS_DIR, "accounts.json");
 const OWNERS = join(JOBS_DIR, "owners.json");
 const PORT = Number(process.env.PORT ?? 5178);
-const TOKENS_PER_VIDEO = 10;
+/** Pricing: 1 token per minute of source video, min 10/job, $1 = 10 tokens.
+ * Third-party cost of a 1h video ≈ $2.00 (Apify ~$1.62 + AssemblyAI ~$0.17
+ * + Claude scoring ~$0.22), so 60 tokens = $6/hr is a ~3× margin. */
 const TOKENS_PER_USD = 10;
+const TOKENS_PER_MINUTE = 1;
+const MIN_JOB_TOKENS = 10;
+/** YouTube duration is unknown at job creation — hold 1h worth, refund after. */
+const HOLD_TOKENS = 60;
+
+function jobTokens(durationSeconds: number | null | undefined): number {
+  if (!durationSeconds || durationSeconds <= 0) return HOLD_TOKENS;
+  return Math.max(MIN_JOB_TOKENS, Math.ceil(durationSeconds / 60) * TOKENS_PER_MINUTE);
+}
 
 // load repo-root .env (same convention as the CLI; never overrides real env)
 const envFile = join(REPO_ROOT, ".env");
@@ -200,6 +213,20 @@ function videoId(url: string): string | null {
   return m ? m[1] : null;
 }
 
+function runCmd(cmd: string, args: string[]): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(cmd, args, { stdio: ["ignore", "pipe", "pipe"] });
+    let out = "";
+    let err = "";
+    child.stdout.on("data", (d: Buffer) => (out += d));
+    child.stderr.on("data", (d: Buffer) => (err += d));
+    child.on("error", reject);
+    child.on("close", (code) =>
+      code === 0 ? resolve(out.trim()) : reject(new Error(err.trim().slice(-300) || `${cmd} exited ${code}`)),
+    );
+  });
+}
+
 function jobSummary(id: string) {
   const dir = join(JOBS_DIR, id);
   const meta = existsSync(join(dir, "meta.json"))
@@ -230,7 +257,9 @@ function jobSummary(id: string) {
   return {
     id,
     title: meta.title ?? id,
-    thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+    thumbnail: existsSync(join(dir, "thumb.jpg"))
+      ? `/files/${id}/thumb.jpg`
+      : `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
     status,
     stage,
     clipCount: clips.length,
@@ -259,7 +288,7 @@ function jobDetail(id: string) {
   return { ...summary, clips };
 }
 
-function startJob(id: string, url: string, userId: string): void {
+function startJob(id: string, url: string, userId: string, chargedTokens: number): void {
   const state = { log: [] as string[], error: null as string | null };
   running.set(id, state);
   const startedAt = Date.now();
@@ -291,11 +320,18 @@ function startJob(id: string, url: string, userId: string): void {
           elapsedMs,
           title: summary.title,
         });
+        // settle the hold: actual price = 1 token per minute of source video
+        const metaFile = join(JOBS_DIR, id, "meta.json");
+        const meta = existsSync(metaFile) ? JSON.parse(readFileSync(metaFile, "utf8")) : {};
+        const actual = jobTokens(meta.duration);
+        if (actual < chargedTokens) {
+          await store.adjustTokens(userId, chargedTokens - actual, "hold-refund", id);
+        }
       } else {
         state.error = state.log.slice(-5).join("\n") || `pipeline exited ${code}`;
         await store.finishJob(id, { status: "error", error: state.error, title: summary.title });
         // refund on failure
-        await store.adjustTokens(userId, TOKENS_PER_VIDEO, "refund", id);
+        await store.adjustTokens(userId, chargedTokens, "refund", id);
       }
     })().catch((err) => console.error("job close bookkeeping failed:", err));
   });
@@ -321,7 +357,11 @@ async function readBody(req: IncomingMessage): Promise<Record<string, unknown>> 
 function serveFile(req: IncomingMessage, res: ServerResponse, path: string): void {
   if (!existsSync(path)) return json(res, 404, { error: "not found" });
   const { size } = statSync(path);
-  const type = path.endsWith(".mp4") ? "video/mp4" : "application/octet-stream";
+  const type = path.endsWith(".mp4")
+    ? "video/mp4"
+    : path.endsWith(".jpg")
+      ? "image/jpeg"
+      : "application/octet-stream";
   const range = /bytes=(\d+)-(\d*)/.exec(req.headers.range ?? "");
   if (range && size > 0) {
     const start = Number(range[1]);
@@ -363,7 +403,13 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
 
   // GET /api/account | POST /api/account/topup {usd}
   if (path === "/api/account" && req.method === "GET") {
-    return json(res, 200, { tokens: await store.balance(user.id), tokensPerVideo: TOKENS_PER_VIDEO });
+    return json(res, 200, {
+      tokens: await store.balance(user.id),
+      tokensPerMinute: TOKENS_PER_MINUTE,
+      minJobTokens: MIN_JOB_TOKENS,
+      holdTokens: HOLD_TOKENS,
+      tokensPerUsd: TOKENS_PER_USD,
+    });
   }
   if (path === "/api/account/topup" && req.method === "POST") {
     const { usd } = await readBody(req);
@@ -390,12 +436,64 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
     if (!id) return json(res, 400, { error: "not a valid YouTube URL" });
     if (running.has(id)) return json(res, 409, { error: "already processing" });
     const tokens = await store.balance(user.id);
-    if (tokens < TOKENS_PER_VIDEO) {
-      return json(res, 402, { error: `need ${TOKENS_PER_VIDEO} tokens, have ${tokens}` });
+    if (tokens < HOLD_TOKENS) {
+      return json(res, 402, {
+        error: `need ${HOLD_TOKENS} tokens to start (1/min held for up to 1h, unused refunded), have ${tokens}`,
+      });
     }
-    await store.adjustTokens(user.id, -TOKENS_PER_VIDEO, "job", id);
+    await store.adjustTokens(user.id, -HOLD_TOKENS, "job-hold", id);
     await store.createJob(id, user.id);
-    startJob(id, `https://www.youtube.com/watch?v=${id}`, user.id);
+    startJob(id, `https://www.youtube.com/watch?v=${id}`, user.id, HOLD_TOKENS);
+    return json(res, 201, jobSummary(id));
+  }
+
+  // POST /api/jobs/upload?filename=… — raw video body. Title comes from the
+  // filename, the poster frame from ffmpeg; download stage is pre-satisfied
+  // so the pipeline's file-exists caching skips straight to transcribe.
+  if (path === "/api/jobs/upload" && req.method === "POST") {
+    const q = new URL(req.url ?? "/", "http://x").searchParams;
+    const filename = q.get("filename") ?? "upload.mp4";
+    const tokens = await store.balance(user.id);
+    if (tokens < MIN_JOB_TOKENS) {
+      return json(res, 402, { error: `need at least ${MIN_JOB_TOKENS} tokens, have ${tokens}` });
+    }
+    // "up" + 9 hex = 11 chars, so the CLI's videoId() accepts it as a job id
+    const id = "up" + randomBytes(5).toString("hex").slice(0, 9);
+    const dir = join(JOBS_DIR, id);
+    mkdirSync(dir, { recursive: true });
+    const title =
+      filename.replace(/\.[a-z0-9]+$/i, "").replace(/[._-]+/g, " ").replace(/\s+/g, " ").trim() ||
+      "Uploaded video";
+    writeFileSync(join(dir, "meta.json"), JSON.stringify({ title, duration: null, source: "upload" }, null, 2));
+    writeFileSync(join(dir, "captions.en.json3"), JSON.stringify({ events: [] }));
+    const source = join(dir, "source.mp4");
+    let duration = 0;
+    try {
+      await pipeline(req, createWriteStream(source));
+      duration = Math.round(
+        Number(await runCmd("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", source])),
+      );
+      if (!Number.isFinite(duration) || duration <= 0) throw new Error("no duration");
+      writeFileSync(join(dir, "meta.json"), JSON.stringify({ title, duration, source: "upload" }, null, 2));
+      await runCmd("ffmpeg", [
+        "-y", "-ss", String(Math.min(3, duration / 2)), "-i", source,
+        "-frames:v", "1", "-vf", "scale=640:-2", join(dir, "thumb.jpg"),
+      ]);
+    } catch {
+      rmSync(dir, { recursive: true, force: true });
+      return json(res, 400, { error: "that file doesn't look like a playable video" });
+    }
+    // duration is known for uploads — charge the exact price, no hold
+    const price = jobTokens(duration);
+    if (tokens < price) {
+      rmSync(dir, { recursive: true, force: true });
+      return json(res, 402, {
+        error: `this video is ${Math.ceil(duration / 60)} min = ${price} tokens, you have ${tokens}`,
+      });
+    }
+    await store.adjustTokens(user.id, -price, "job", id);
+    await store.createJob(id, user.id);
+    startJob(id, id, user.id, price);
     return json(res, 201, jobSummary(id));
   }
 
@@ -418,6 +516,12 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
     }
     if (!(await canSee(user, parts[2]))) return json(res, 404, { error: "no such job" });
     return json(res, 200, jobDetail(parts[2]));
+  }
+
+  // GET /files/:id/thumb.jpg — generated poster frame for uploaded videos
+  if (parts[0] === "files" && parts[1] && parts[2] === "thumb.jpg" && parts.length === 3) {
+    if (!(await canSee(user, parts[1]))) return json(res, 404, { error: "not found" });
+    return serveFile(req, res, join(JOBS_DIR, parts[1], "thumb.jpg"));
   }
 
   // GET /files/:id/clips/:file (video streaming with range support)

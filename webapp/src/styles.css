@@ -25,3 +25,16 @@
 body {
   @apply bg-background text-foreground font-sans antialiased;
 }
+
+/* clapperboard loader: lid snaps shut fast, lifts back slow */
+@keyframes clap {
+  0%   { transform: rotate(-24deg); }
+  30%  { transform: rotate(0deg); animation-timing-function: ease-out; }
+  45%  { transform: rotate(0deg); }
+  85%  { transform: rotate(-24deg); }
+  100% { transform: rotate(-24deg); }
+}
+.clapper-lid {
+  transform-origin: 6px 15px;
+  animation: clap 1.4s cubic-bezier(0.6, 0, 0.8, 1) infinite;
+}

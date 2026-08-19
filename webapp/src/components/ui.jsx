@@ -100,3 +100,21 @@ export function Dialog({ open, onClose, title, description, children }) {
 export function Spinner({ className }) {
   return <Loader2 className={cn("h-4 w-4 animate-spin", className)} />;
 }
+
+/** Clapperboard loader — the striped lid snaps like a slate between takes. */
+export function ClapperLoader({ label = "Loading…", className }) {
+  return (
+    <div className={cn("flex flex-col items-center gap-4 py-16", className)}>
+      <svg viewBox="0 -20 48 64" className="h-16 w-16 text-foreground" fill="none"
+           stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round">
+        <g className="clapper-lid">
+          <rect x="5" y="4" width="38" height="10" rx="2.5" fill="hsl(240 10% 5.9%)" />
+          <path d="M12 4l-4 10M22 4l-4 10M32 4l-4 10M42 4l-4 10" strokeWidth="2" />
+        </g>
+        <rect x="5" y="16" width="38" height="24" rx="2.5" fill="hsl(240 10% 5.9%)" />
+        <path d="M5 24h38" strokeWidth="1.5" className="text-muted-foreground" stroke="currentColor" />
+      </svg>
+      <span className="animate-pulse text-sm text-muted-foreground">{label}</span>
+    </div>
+  );
+}

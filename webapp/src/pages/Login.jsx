@@ -4,7 +4,10 @@ import { devMode, getUser, signIn, signUp } from "../auth.js";
 import { Button, Card, Input, Spinner } from "../components/ui.jsx";
 
 export default function Login({ onAuth }) {
-  const [mode, setMode] = useState("login");
+  // /login?mode=signup (landing page CTA) opens straight in signup mode
+  const [mode, setMode] = useState(
+    new URLSearchParams(window.location.search).get("mode") === "signup" ? "signup" : "login",
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
