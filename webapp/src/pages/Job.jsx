@@ -68,10 +68,10 @@ function StageStepper({ stage, lastLog }) {
                 <span className={cn("w-px flex-1", i < current ? "bg-emerald-500/40" : "bg-border")} />
               )}
             </div>
-            <div className={cn("min-w-0 pt-1", !last && "pb-5")}>
+            <div className={cn("min-w-0", !last && "pb-5")}>
               <span
                 className={cn(
-                  "text-sm",
+                  "flex h-7 items-center text-sm",
                   state === "active" && "font-medium",
                   state === "todo" && "text-muted-foreground",
                   state === "done" && "text-emerald-400",
@@ -134,7 +134,7 @@ export default function Job() {
       {job.status === "done" && job.clips.length > 0 && <StatsStrip job={job} />}
 
       {job.status === "processing" && (
-        <Card className="mx-auto mt-10 max-w-md overflow-hidden">
+        <Card className="mx-auto mb-10 mt-10 max-w-md overflow-hidden">
           <img src={job.thumbnail} alt="" className="aspect-video w-full bg-secondary object-cover" />
           <div className="p-6">
             <p className="mb-5 text-sm text-muted-foreground">
