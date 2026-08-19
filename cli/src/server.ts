@@ -66,37 +66,124 @@ async function authenticate(req: IncomingMessage): Promise<AuthUser | null> {
   }
 }
 
-// ---- tokens (per user) -----------------------------------------------------
+// ---- state store: Supabase Postgres in prod, local JSON files in dev -------
+
+async function sb(pathAndQuery: string, init?: RequestInit): Promise<unknown> {
+  const res = await fetch(`${SUPA_URL}/rest/v1/${pathAndQuery}`, {
+    ...init,
+    headers: {
+      apikey: SUPA_SECRET!,
+      authorization: `Bearer ${SUPA_SECRET}`,
+      "content-type": "application/json",
+      ...((init?.headers as Record<string, string>) ?? {}),
+    },
+  });
+  if (!res.ok) throw new Error(`supabase ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+interface JobPatch {
+  status: string;
+  clipCount?: number;
+  elapsedMs?: number;
+  error?: string | null;
+  title?: string | null;
+}
+
+interface Store {
+  balance(userId: string): Promise<number>;
+  adjustTokens(userId: string, delta: number, reason: string, jobId?: string): Promise<number>;
+  /** null = no recorded owner (legacy/public job) */
+  jobOwner(id: string): Promise<string | null>;
+  createJob(id: string, ownerId: string): Promise<void>;
+  finishJob(id: string, patch: JobPatch): Promise<void>;
+  deleteJob(id: string): Promise<void>;
+}
 
 function readJson(path: string): Record<string, number | string> {
   return existsSync(path) ? JSON.parse(readFileSync(path, "utf8")) : {};
 }
 
-function balance(userId: string): number {
-  return Number(readJson(ACCOUNTS)[userId] ?? 0);
-}
+const fileStore: Store = {
+  async balance(userId) {
+    return Number(readJson(ACCOUNTS)[userId] ?? 0);
+  },
+  async adjustTokens(userId, delta) {
+    const all = readJson(ACCOUNTS);
+    const next = Math.max(0, Number(all[userId] ?? 0) + delta);
+    all[userId] = next;
+    writeFileSync(ACCOUNTS, JSON.stringify(all, null, 2));
+    return next;
+  },
+  async jobOwner(id) {
+    return (readJson(OWNERS)[id] as string) ?? null;
+  },
+  async createJob(id, ownerId) {
+    const all = readJson(OWNERS);
+    all[id] = ownerId;
+    writeFileSync(OWNERS, JSON.stringify(all, null, 2));
+  },
+  async finishJob() {},
+  async deleteJob(id) {
+    const all = readJson(OWNERS);
+    delete all[id];
+    writeFileSync(OWNERS, JSON.stringify(all, null, 2));
+  },
+};
 
-function setBalance(userId: string, tokens: number): void {
-  const all = readJson(ACCOUNTS);
-  all[userId] = tokens;
-  writeFileSync(ACCOUNTS, JSON.stringify(all, null, 2));
-}
+const dbStore: Store = {
+  async balance(userId) {
+    const rows = (await sb(`accounts?user_id=eq.${userId}&select=tokens`)) as { tokens: number }[];
+    return rows[0]?.tokens ?? 0;
+  },
+  async adjustTokens(userId, delta, reason, jobId) {
+    const next = Math.max(0, (await this.balance(userId)) + delta);
+    await sb(`accounts?on_conflict=user_id`, {
+      method: "POST",
+      headers: { prefer: "resolution=merge-duplicates" },
+      body: JSON.stringify({ user_id: userId, tokens: next, updated_at: new Date().toISOString() }),
+    });
+    await sb("token_transactions", {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId, delta, reason, job_id: jobId ?? null }),
+    });
+    return next;
+  },
+  async jobOwner(id) {
+    const rows = (await sb(`jobs?id=eq.${id}&select=owner_id`)) as { owner_id: string | null }[];
+    return rows[0]?.owner_id ?? null;
+  },
+  async createJob(id, ownerId) {
+    await sb(`jobs?on_conflict=id`, {
+      method: "POST",
+      headers: { prefer: "resolution=merge-duplicates" },
+      body: JSON.stringify({ id, owner_id: ownerId, status: "processing", updated_at: new Date().toISOString() }),
+    });
+  },
+  async finishJob(id, patch) {
+    await sb(`jobs?id=eq.${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        status: patch.status,
+        clip_count: patch.clipCount ?? 0,
+        elapsed_ms: patch.elapsedMs ?? null,
+        error: patch.error ?? null,
+        title: patch.title ?? null,
+        updated_at: new Date().toISOString(),
+      }),
+    });
+  },
+  async deleteJob(id) {
+    await sb(`jobs?id=eq.${id}`, { method: "DELETE" });
+  },
+};
 
-// ---- job ownership ---------------------------------------------------------
-
-function jobOwner(id: string): string | null {
-  return (readJson(OWNERS)[id] as string) ?? null;
-}
-
-function setJobOwner(id: string, userId: string): void {
-  const all = readJson(OWNERS);
-  all[id] = userId;
-  writeFileSync(OWNERS, JSON.stringify(all, null, 2));
-}
+const store: Store = DEV_AUTH ? fileStore : dbStore;
 
 /** Jobs with no recorded owner predate auth — visible to everyone. */
-function canSee(user: AuthUser, jobId: string): boolean {
-  const owner = jobOwner(jobId);
+async function canSee(user: AuthUser, jobId: string): Promise<boolean> {
+  const owner = await store.jobOwner(jobId);
   return owner === null || owner === user.id;
 }
 
@@ -189,17 +276,28 @@ function startJob(id: string, url: string, userId: string): void {
   child.stdout.on("data", collect);
   child.stderr.on("data", collect);
   child.on("close", (code) => {
-    if (code === 0) {
-      writeFileSync(
-        join(JOBS_DIR, id, "stats.json"),
-        JSON.stringify({ elapsedMs: Date.now() - startedAt, finishedAt: Date.now() }),
-      );
-      running.delete(id);
-    } else {
-      state.error = state.log.slice(-5).join("\n") || `pipeline exited ${code}`;
-      // refund on failure
-      setBalance(userId, balance(userId) + TOKENS_PER_VIDEO);
-    }
+    void (async () => {
+      const summary = jobSummary(id);
+      if (code === 0) {
+        const elapsedMs = Date.now() - startedAt;
+        writeFileSync(
+          join(JOBS_DIR, id, "stats.json"),
+          JSON.stringify({ elapsedMs, finishedAt: Date.now() }),
+        );
+        running.delete(id);
+        await store.finishJob(id, {
+          status: "done",
+          clipCount: summary.clipCount,
+          elapsedMs,
+          title: summary.title,
+        });
+      } else {
+        state.error = state.log.slice(-5).join("\n") || `pipeline exited ${code}`;
+        await store.finishJob(id, { status: "error", error: state.error, title: summary.title });
+        // refund on failure
+        await store.adjustTokens(userId, TOKENS_PER_VIDEO, "refund", id);
+      }
+    })().catch((err) => console.error("job close bookkeeping failed:", err));
   });
 }
 
@@ -265,36 +363,38 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
 
   // GET /api/account | POST /api/account/topup {usd}
   if (path === "/api/account" && req.method === "GET") {
-    return json(res, 200, { tokens: balance(user.id), tokensPerVideo: TOKENS_PER_VIDEO });
+    return json(res, 200, { tokens: await store.balance(user.id), tokensPerVideo: TOKENS_PER_VIDEO });
   }
   if (path === "/api/account/topup" && req.method === "POST") {
     const { usd } = await readBody(req);
     const amount = Number(usd);
     if (!Number.isFinite(amount) || amount <= 0) return json(res, 400, { error: "invalid amount" });
-    setBalance(user.id, balance(user.id) + Math.floor(amount * TOKENS_PER_USD));
-    return json(res, 200, { tokens: balance(user.id) });
+    const tokens = await store.adjustTokens(user.id, Math.floor(amount * TOKENS_PER_USD), "topup");
+    return json(res, 200, { tokens });
   }
 
   // GET /api/jobs | POST /api/jobs {url}
   if (path === "/api/jobs" && req.method === "GET") {
-    const ids = existsSync(JOBS_DIR)
+    const all = existsSync(JOBS_DIR)
       ? readdirSync(JOBS_DIR, { withFileTypes: true })
           .filter((d) => d.isDirectory())
           .map((d) => d.name)
-          .filter((id) => canSee(user, id))
       : [];
-    return json(res, 200, ids.map(jobSummary));
+    const visible: string[] = [];
+    for (const id of all) if (await canSee(user, id)) visible.push(id);
+    return json(res, 200, visible.map(jobSummary));
   }
   if (path === "/api/jobs" && req.method === "POST") {
     const { url } = await readBody(req);
     const id = typeof url === "string" ? videoId(url) : null;
     if (!id) return json(res, 400, { error: "not a valid YouTube URL" });
     if (running.has(id)) return json(res, 409, { error: "already processing" });
-    if (balance(user.id) < TOKENS_PER_VIDEO) {
-      return json(res, 402, { error: `need ${TOKENS_PER_VIDEO} tokens, have ${balance(user.id)}` });
+    const tokens = await store.balance(user.id);
+    if (tokens < TOKENS_PER_VIDEO) {
+      return json(res, 402, { error: `need ${TOKENS_PER_VIDEO} tokens, have ${tokens}` });
     }
-    setBalance(user.id, balance(user.id) - TOKENS_PER_VIDEO);
-    setJobOwner(id, user.id);
+    await store.adjustTokens(user.id, -TOKENS_PER_VIDEO, "job", id);
+    await store.createJob(id, user.id);
     startJob(id, `https://www.youtube.com/watch?v=${id}`, user.id);
     return json(res, 201, jobSummary(id));
   }
@@ -302,14 +402,12 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   // DELETE /api/jobs/:id
   if (parts[0] === "api" && parts[1] === "jobs" && parts.length === 3 && req.method === "DELETE") {
     const id = parts[2];
-    if (!existsSync(join(JOBS_DIR, id)) || !canSee(user, id)) {
+    if (!existsSync(join(JOBS_DIR, id)) || !(await canSee(user, id))) {
       return json(res, 404, { error: "no such job" });
     }
     if (running.has(id)) return json(res, 409, { error: "still processing — wait for it to finish" });
     rmSync(join(JOBS_DIR, id), { recursive: true, force: true });
-    const owners = readJson(OWNERS);
-    delete owners[id];
-    writeFileSync(OWNERS, JSON.stringify(owners, null, 2));
+    await store.deleteJob(id);
     return json(res, 200, { ok: true });
   }
 
@@ -318,13 +416,13 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
     if (!existsSync(join(JOBS_DIR, parts[2])) && !running.has(parts[2])) {
       return json(res, 404, { error: "no such job" });
     }
-    if (!canSee(user, parts[2])) return json(res, 404, { error: "no such job" });
+    if (!(await canSee(user, parts[2]))) return json(res, 404, { error: "no such job" });
     return json(res, 200, jobDetail(parts[2]));
   }
 
   // GET /files/:id/clips/:file (video streaming with range support)
   if (parts[0] === "files" && parts[1] && parts[2] === "clips" && parts[3]) {
-    if (!canSee(user, parts[1])) return json(res, 404, { error: "not found" });
+    if (!(await canSee(user, parts[1]))) return json(res, 404, { error: "not found" });
     const file = decodeURIComponent(parts[3]);
     if (file.includes("..") || file.includes("/")) return json(res, 400, { error: "bad path" });
     return serveFile(req, res, join(JOBS_DIR, parts[1], "clips", file));
@@ -332,7 +430,7 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
 
   // GET /api/jobs/:id/zip — stream all clips as a zip
   if (parts[0] === "api" && parts[1] === "jobs" && parts[2] && parts[3] === "zip") {
-    if (!canSee(user, parts[2])) return json(res, 404, { error: "not found" });
+    if (!(await canSee(user, parts[2]))) return json(res, 404, { error: "not found" });
     const clipsDir = join(JOBS_DIR, parts[2], "clips");
     if (!existsSync(clipsDir)) return json(res, 404, { error: "no clips" });
     res.writeHead(200, {
