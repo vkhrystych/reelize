@@ -1,0 +1,4 @@
+# heavy, reproducible media — rebuild steps in README.md
+assets/
+variant-*.mp4
+check-*.jpg

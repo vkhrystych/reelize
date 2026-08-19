@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- emerald tile -->
+  <rect width="64" height="64" rx="14" fill="#10b981"/>
+  <!-- vertical 9:16 reel frame -->
+  <rect x="19" y="10" width="26" height="44" rx="7" fill="#09090b"/>
+  <!-- play mark -->
+  <path d="M28 24.5c0-1.6 1.75-2.6 3.13-1.78l11.3 6.72a2.07 2.07 0 0 1 0 3.56l-11.3 6.72A2.07 2.07 0 0 1 28 38V24.5z" fill="#34d399"/>
+</svg>

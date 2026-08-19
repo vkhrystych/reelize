@@ -1,0 +1,22 @@
+{
+  "name": "reelize",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "reelize": "./src/index.ts"
+  },
+  "scripts": {
+    "reelize": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "serve": "tsx src/server.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.74.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

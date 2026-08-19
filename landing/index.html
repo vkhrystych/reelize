@@ -111,6 +111,16 @@ h1 .out{
 .sub{margin-top:26px;font-size:19.5px;color:#C9C8D6;max-width:520px;line-height:1.5}
 .sub b{color:var(--paper);font-weight:700}
 
+/* CTA button row (replaces the old waitlist form) */
+.cta-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+
+/* pricing */
+.price-rules{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin-bottom:28px}
+.price-rule{display:flex;align-items:baseline;gap:10px;padding:18px 30px;border:1px solid var(--line);border-radius:999px;background:var(--ink-2)}
+.price-rule b{font-size:26px;font-weight:900;letter-spacing:-.03em;color:var(--lime)}
+.price-rule span{font-size:14.5px;color:var(--muted);font-weight:600}
+.price-note{text-align:center;color:var(--muted);font-size:14px;margin-top:24px}
+
 /* waitlist form */
 .wl{margin-top:34px;max-width:520px}
 .wl-form{display:flex;gap:10px;background:var(--ink-2);border:1px solid var(--line);padding:8px;border-radius:999px;transition:border-color .2s,box-shadow .2s}
@@ -383,9 +393,13 @@ footer{border-top:1px solid var(--line);padding:56px 0 40px;margin-top:110px}
       <a href="#how">How it works</a>
       <a href="#demo">Demo</a>
       <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
       <a href="#faq">FAQ</a>
     </nav>
-    <a class="btn" href="#waitlist">Join the waitlist</a>
+    <div style="display:flex;gap:18px;align-items:center">
+      <a href="/login" style="font-size:14.5px">Log in</a>
+      <a class="btn" href="/login?mode=signup">Sign up free</a>
+    </div>
   </div>
 </header>
 
@@ -396,7 +410,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 40px;margin-top:110px}
     <div class="wrap hero-grid">
       <div>
         <div class="badge-row">
-          <span class="badge hot">● Early access — Q3 2026</span>
+          <span class="badge hot">● Live — free credits to start</span>
           <span class="badge">No editor needed</span>
           <span class="badge">40+ languages</span>
         </div>
@@ -413,12 +427,11 @@ footer{border-top:1px solid var(--line);padding:56px 0 40px;margin-top:110px}
           <b>hit</b>, and hands you a pack of vertical clips ready for Reels, TikTok and Shorts.
         </p>
 
-        <div class="wl" id="waitlist">
-          <form class="wl-form" novalidate>
-            <input type="email" placeholder="you@studio.com" aria-label="Your email" autocomplete="email">
-            <button class="btn pink" type="submit">Get early access →</button>
-          </form>
-          <p class="err">Enter a valid email — we only need one.</p>
+        <div class="wl">
+          <div class="cta-row">
+            <a class="btn pink" href="/login?mode=signup">Start cutting free →</a>
+            <a class="btn" href="/login">Log in</a>
+          </div>
           <div class="wl-meta">
             <span class="avatars" aria-hidden="true">
               <span style="background:#D8FF3E">A</span>
@@ -426,9 +439,8 @@ footer{border-top:1px solid var(--line);padding:56px 0 40px;margin-top:110px}
               <span style="background:#FF2E74;color:#fff">K</span>
               <span style="background:#7A5BFF;color:#fff">R</span>
             </span>
-            <span><b id="count">2,847</b> creators already in line · free credits at launch</span>
+            <span><b id="count">2,847</b> creators already cutting · free credits when you sign up</span>
           </div>
-          <div class="wl-ok"><span class="tick">✓</span><span>You're in. We'll email your invite before public launch.</span></div>
         </div>
       </div>
 
@@ -560,7 +572,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 40px;margin-top:110px}
                 <b style="font-size:15px;letter-spacing:-.02em">Export pack</b>
                 <div style="color:var(--muted);font-size:13px;margin-top:4px">12 clips · MP4 1080×1920 · SRT included</div>
               </div>
-              <a class="btn" href="#waitlist">Download</a>
+              <a class="btn" href="/login?mode=signup">Download</a>
             </div>
           </div>
         </div>
@@ -577,11 +589,11 @@ footer{border-top:1px solid var(--line);padding:56px 0 40px;margin-top:110px}
       </div>
 
       <div class="feats">
-        <article class="feat rv"><div class="ic">🎯</div><h3>Highlight detection</h3><p>Scored on hook strength, emotion, standalone clarity and payoff — not just loudness or keyword hits.</p></article>
+        <article class="feat rv"><div class="ic">🎯</div><h3>Highlight detection</h3><p>Scored on hook strength, emotion, standalone clarity and payoff — not just loudness or keyword hits. Clips arrive ranked, best first.</p></article>
         <article class="feat rv"><div class="ic">🗣️</div><h3>Speaker-aware cuts</h3><p>Diarization keeps a two-person exchange intact instead of chopping the guest's answer in half.</p></article>
         <article class="feat rv"><div class="ic">📱</div><h3>Auto reframe to 9:16</h3><p>The active speaker stays centred, even when the camera cuts back and forth.</p></article>
         <article class="feat rv"><div class="ic">💬</div><h3>Burned-in captions</h3><p>Word-by-word karaoke styling, four presets, your font and brand colour.</p></article>
-        <article class="feat rv"><div class="ic">✍️</div><h3>Titles &amp; hashtags</h3><p>Each clip ships with a hook title, description and platform-specific tags you can edit inline.</p></article>
+        <article class="feat rv"><div class="ic">🪝</div><h3>Hook &amp; title on the video</h3><p>Every clip opens with its hook line as a 5-second title card burned onto the video — TikTok-safe placement, ready to post as-is.</p></article>
         <article class="feat rv"><div class="ic">🌍</div><h3>40+ languages</h3><p>Transcribe in the original, translate captions for a second audience, export both.</p></article>
       </div>
     </div>
@@ -623,6 +635,35 @@ footer{border-top:1px solid var(--line);padding:56px 0 40px;margin-top:110px}
     </div>
   </section>
 
+  <!-- ================= PRICING ================= -->
+  <section id="pricing">
+    <div class="wrap">
+      <div class="head-block rv">
+        <span class="eyebrow">Pricing</span>
+        <h2>One minute = one token.<br>That's the whole table.</h2>
+      </div>
+
+      <div class="price-rules rv">
+        <div class="price-rule"><b>$1</b><span>= 10 tokens</span></div>
+        <div class="price-rule"><b>1 min</b><span>of source video = 1 token</span></div>
+      </div>
+
+      <div class="stats rv" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat"><b>$2</b><span>20-min interview · 20 tokens</span></div>
+        <div class="stat"><b>$6</b><span>1-hour podcast · 60 tokens</span></div>
+        <div class="stat"><b>$18</b><span>3-hour ramble · 180 tokens</span></div>
+      </div>
+
+      <p class="price-note rv">
+        Minimum 10 tokens per video · every video returns a full pack of ranked, captioned clips ·
+        free credits when you sign up — no card, no subscription.
+      </p>
+      <div class="cta-row rv" style="justify-content:center;margin-top:26px">
+        <a class="btn pink" href="/login?mode=signup">Start with free credits →</a>
+      </div>
+    </div>
+  </section>
+
   <!-- ================= FAQ ================= -->
   <section id="faq">
     <div class="wrap faq">
@@ -647,13 +688,10 @@ footer{border-top:1px solid var(--line);padding:56px 0 40px;margin-top:110px}
         <h2>Your back catalogue is a content library.</h2>
         <p>You've already recorded the good stuff. Reelize just goes and finds it.</p>
         <div class="wl">
-          <form class="wl-form" novalidate>
-            <input type="email" placeholder="you@studio.com" aria-label="Your email" autocomplete="email">
-            <button class="btn pink big" type="submit">Join the waitlist</button>
-          </form>
-          <p class="err">Enter a valid email — we only need one.</p>
-          <div class="wl-meta"><span>No card. No spam. One email when your invite is live.</span></div>
-          <div class="wl-ok"><span class="tick">✓</span><span>You're in. Watch your inbox.</span></div>
+          <div class="cta-row" style="justify-content:center">
+            <a class="btn pink big" href="/login?mode=signup">Sign up free →</a>
+          </div>
+          <div class="wl-meta"><span>No card. Free credits on signup. Cancel any time.</span></div>
         </div>
       </div>
     </div>
@@ -669,7 +707,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 40px;margin-top:110px}
         <p style="margin-top:14px;color:var(--muted);font-size:14.5px">One link in, a month of shorts out. Built for people who talk for a living.</p>
       </div>
       <div class="foot-links">
-        <div><b>Product</b><a href="#how">How it works</a><a href="#demo">Demo</a><a href="#features">Features</a><a href="#waitlist">Early access</a></div>
+        <div><b>Product</b><a href="#how">How it works</a><a href="#demo">Demo</a><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="/login">Log in</a></div>
         <div><b>Company</b><a href="#">About</a><a href="#">Blog</a><a href="mailto:hey@reelize.app">Contact</a></div>
         <div><b>Legal</b><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Content policy</a></div>
       </div>
@@ -766,27 +804,6 @@ footer{border-top:1px solid var(--line);padding:56px 0 40px;margin-top:110px}
     });
   }
 
-  /* waitlist forms */
-  document.querySelectorAll('.wl').forEach(function(wl){
-    var form = wl.querySelector('.wl-form');
-    var input = wl.querySelector('input');
-    var err = wl.querySelector('.err');
-    form.addEventListener('submit', function(e){
-      e.preventDefault();
-      var v = (input.value || '').trim();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) {
-        if (err) err.classList.add('on');
-        input.focus();
-        return;
-      }
-      if (err) err.classList.remove('on');
-      // TODO: POST v to your waitlist endpoint (Formspree / Resend / your API)
-      wl.classList.add('done');
-      var c = document.getElementById('count');
-      if (c) c.textContent = (2848).toLocaleString('en-US');
-    });
-    input.addEventListener('input', function(){ if (err) err.classList.remove('on'); });
-  });
 })();
 </script>
 </body>

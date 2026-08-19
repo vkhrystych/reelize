@@ -1,0 +1,8 @@
+{
+  "name": "reelize-monorepo",
+  "private": true,
+  "workspaces": [
+    "cli",
+    "webapp"
+  ]
+}
