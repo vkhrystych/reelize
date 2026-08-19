@@ -91,7 +91,10 @@ export async function transcribe(paths: JobPaths): Promise<void> {
     log("transcribe", "no ASSEMBLYAI_API_KEY — used YouTube auto-captions (no speaker labels)");
   }
   if (transcript.words.length === 0) {
-    throw new Error("transcription produced no words — cannot score this video");
+    throw new Error(
+      "transcription produced no words — no YouTube auto-captions were available. " +
+        "Set ASSEMBLYAI_API_KEY in .env to transcribe the audio directly.",
+    );
   }
   await writeFile(paths.transcript, JSON.stringify(transcript));
   log("transcribe", `${transcript.words.length} words (${transcript.source})`);

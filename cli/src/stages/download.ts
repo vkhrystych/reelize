@@ -1,8 +1,9 @@
 import { existsSync } from "node:fs";
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { JobPaths } from "../lib/types.ts";
+import { downloadViaApify, oembedMeta } from "../lib/apify.ts";
 import { log, run } from "../lib/run.ts";
 
 const FORMAT = "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[ext=mp4]/b";
@@ -31,41 +32,63 @@ async function ytdlp(args: string[]): Promise<string> {
 }
 
 export async function download(url: string, paths: JobPaths): Promise<void> {
+  const apify = !!process.env.APIFY_TOKEN;
+
   if (!existsSync(paths.meta)) {
     log("download", "fetching metadata…");
-    const json = await ytdlp(["-J", "--no-download", url]);
-    const info = JSON.parse(json);
-    await writeFile(
-      paths.meta,
-      JSON.stringify(
-        { id: info.id, title: info.title, duration: info.duration, url },
-        null,
-        2,
-      ),
-    );
+    let meta: { id?: string; title?: string; duration?: number | null } | null = null;
+    if (apify) {
+      // oEmbed: public, not bot-walled, safe from datacenter IPs
+      const oe = await oembedMeta(url);
+      if (oe) meta = { title: oe.title, duration: null };
+    }
+    if (!meta) {
+      const info = JSON.parse(await ytdlp(["-J", "--no-download", url]));
+      meta = { id: info.id, title: info.title, duration: info.duration };
+    }
+    await writeFile(paths.meta, JSON.stringify({ ...meta, url }, null, 2));
   }
 
   if (!existsSync(paths.captionsJson3)) {
     log("download", "fetching auto-captions (json3)…");
-    await ytdlp([
-      "--skip-download",
-      "--write-auto-subs",
-      "--sub-langs",
-      "en",
-      "--sub-format",
-      "json3",
-      "-o",
-      paths.captionsJson3.replace(/\.en\.json3$/, ""),
-      url,
-    ]);
+    try {
+      await ytdlp([
+        "--skip-download",
+        "--write-auto-subs",
+        "--sub-langs",
+        "en",
+        "--sub-format",
+        "json3",
+        "-o",
+        paths.captionsJson3.replace(/\.en\.json3$/, ""),
+        url,
+      ]);
+    } catch {
+      log("download", "caption fetch failed (transcribe will need ASSEMBLYAI_API_KEY)");
+    }
     if (!existsSync(paths.captionsJson3)) {
-      log("download", "no auto-captions available for this video");
       await writeFile(paths.captionsJson3, JSON.stringify({ events: [] }));
     }
   }
 
   if (!existsSync(paths.source)) {
-    log("download", "downloading source video…");
+    if (apify) {
+      // primary on servers: datacenter IPs are bot-walled for direct download
+      try {
+        const result = await downloadViaApify(url, paths.source);
+        if (result.durationSeconds) {
+          const meta = JSON.parse(await readFile(paths.meta, "utf8"));
+          if (!meta.duration) {
+            meta.duration = result.durationSeconds;
+            await writeFile(paths.meta, JSON.stringify(meta, null, 2));
+          }
+        }
+        return;
+      } catch (err) {
+        log("download", `Apify failed (${(err as Error).message.split("\n")[0]}), falling back to yt-dlp…`);
+      }
+    }
+    log("download", "downloading source video via yt-dlp…");
     await ytdlp(["-f", FORMAT, "-o", paths.source, url]);
   } else {
     log("download", "source.mp4 cached, skipping");
